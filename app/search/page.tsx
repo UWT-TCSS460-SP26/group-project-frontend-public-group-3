@@ -36,11 +36,23 @@ function buildSearchHref(
   return `/search?${params.toString()}`;
 }
 
+function buildDetailHref(type: MediaType, id: number): string {
+  const params = new URLSearchParams({
+    type,
+    id: String(id),
+  });
+  return `/details?${params.toString()}`;
+}
+
 function ResultCard({ item }: { item: MediaListItem }) {
   const yearLabel = item.year != null ? String(item.year) : "—";
 
   return (
-    <article className="flex gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+    <a
+      href={buildDetailHref(item.mediaType, item.id)}
+      className="block rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-shadow hover:border-[#5b4bb7]/30 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5b4bb7]/30"
+    >
+      <article className="flex gap-4">
       <div className="h-36 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100">
         {item.posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- TMDB posters; avoids next.config remotePatterns
@@ -72,7 +84,8 @@ function ResultCard({ item }: { item: MediaListItem }) {
           {item.overview}
         </p>
       </div>
-    </article>
+      </article>
+    </a>
   );
 }
 

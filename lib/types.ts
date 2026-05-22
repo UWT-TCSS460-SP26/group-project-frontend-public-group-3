@@ -19,3 +19,62 @@ export type MediaListResponse = {
 export type ApiErrorResponse = {
   error: string;
 };
+
+export type UserContentAuthor = {
+  id: number;
+  username: string;
+};
+
+export type ReviewResponse = {
+  id: number;
+  mediaType: MediaType;
+  title: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author: UserContentAuthor;
+};
+
+export type CommunitySummary = {
+  averageScore: number | null;
+  ratingCount: number;
+  reviewCount: number;
+  recentReviews: ReviewResponse[];
+};
+
+export type MovieDetailResponse = {
+  id: number;
+  title: string;
+  year: number | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  overview: string;
+  genres: string[];
+  runtimeMinutes: number | null;
+  status: string;
+  rating: number;
+  community: CommunitySummary;
+};
+
+export type ShowDetailResponse = {
+  id: number;
+  title: string;
+  year: number | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  overview: string;
+  genres: string[];
+  seasonCount: number;
+  episodeCount: number;
+  status: string;
+  rating: number;
+  community: CommunitySummary;
+};
+
+export type MediaDetailResponse = MovieDetailResponse | ShowDetailResponse;
+
+export function isMovieDetail(
+  detail: MediaDetailResponse,
+): detail is MovieDetailResponse {
+  return "runtimeMinutes" in detail;
+}
