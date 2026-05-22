@@ -34,3 +34,31 @@ export async function searchMovies(
 
   return res.json() as Promise<MediaListResponse>;
 }
+
+export async function searchTvShows(
+  title: string,
+  page = 1,
+): Promise<MediaListResponse> {
+  const params = new URLSearchParams({
+    title: title.trim(),
+    page: String(page),
+  });
+
+  const url = `${getApiBaseUrl()}/v1/tv-shows/search?${params}`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    let message = `Search request failed (${res.status})`;
+    try {
+      const body = (await res.json()) as ApiErrorResponse;
+      if (body.error) {
+        message = body.error;
+      }
+    } catch {
+      // use default message
+    }
+    throw new Error(message);
+  }
+
+  return res.json() as Promise<MediaListResponse>;
+}

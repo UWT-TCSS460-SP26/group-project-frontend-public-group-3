@@ -24,7 +24,7 @@ export default function SearchLoading() {
           <h1
             className={`text-3xl font-bold tracking-tight text-[#0f1f3d] sm:text-4xl ${montserrat.className}`}
           >
-            Movie Search
+            Search
           </h1>
         </header>
         <div
@@ -33,7 +33,9 @@ export default function SearchLoading() {
           aria-live="polite"
         >
           <p className="text-sm font-medium text-[#5b4bb7]">Searching…</p>
-          <p className="mt-2 text-sm text-slate-500">Loading results</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Loading movies and TV results
+          </p>
         </div>
       </div>
     </div>
