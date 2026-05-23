@@ -14,9 +14,6 @@ export const config = {
     matcher: [
         '/profile',
         '/dashboard',
-        '/messages/view',
-        '/messages/view/:id',
-        '/messages/send',
         '/debug',
     ],
 };

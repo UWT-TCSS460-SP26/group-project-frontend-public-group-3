@@ -53,7 +53,7 @@ export default async function Header() {
                     {session?.user ? (
                         <>
                             <span className="max-w-[16rem] truncate text-sm text-slate-600">
-                                {session.user.email}
+                                Hello, {session.user.name}!
                             </span>
                             <form action={signOutAction}>
                                 <button type="submit" className={secondaryButtonClass}>

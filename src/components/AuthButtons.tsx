@@ -38,7 +38,7 @@ export function UserBadge() {
     if (status === 'unauthenticated') return <SignInButton />;
     return (
         <span className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-600">{session?.user?.email}</span>
+            <span className="text-sm text-slate-600">Hello, {session?.user?.name}!</span>
             <SignOutButton />
         </span>
     );
