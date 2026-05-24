@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/src/lib/auth';
+import { buildLoginPath } from '@/src/lib/auth-urls';
 
 export default auth((request) => {
     if (!request.auth) {
-        const signInUrl = new URL('/api/auth/signin', request.url);
-        signInUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-        return NextResponse.redirect(signInUrl);
+        return NextResponse.redirect(
+            new URL(buildLoginPath(request.nextUrl.pathname), request.url),
+        );
     }
     return NextResponse.next();
 });
@@ -14,9 +15,6 @@ export const config = {
     matcher: [
         '/profile',
         '/dashboard',
-        '/messages/view',
-        '/messages/view/:id',
-        '/messages/send',
         '/debug',
     ],
 };
