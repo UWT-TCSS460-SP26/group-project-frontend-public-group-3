@@ -12,6 +12,7 @@ import NextAuth from 'next-auth';
  * callback and surfaced to client code via the `session` callback.
  */
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    trustHost: true,
     providers: [
         {
             // Must match the callback segment registered in auth-squared:

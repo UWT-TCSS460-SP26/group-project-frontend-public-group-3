@@ -2,6 +2,7 @@ import { Inter, Montserrat } from 'next/font/google';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/src/lib/auth';
+import { buildLoginPath } from '@/src/lib/auth-urls';
 import { decodeJwt } from '@/src/lib/jwt';
 
 const inter = Inter({
@@ -44,7 +45,7 @@ export default async function ProfilePage() {
     const session = await auth();
 
     if (!session?.user) {
-        redirect('/api/auth/signin?callbackUrl=/profile');
+        redirect(buildLoginPath('/profile'));
     }
 
     const email = session.user.email ?? '—';
