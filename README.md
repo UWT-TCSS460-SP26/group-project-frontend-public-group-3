@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Group 3 — Movies & TV
 
-## Getting Started
+Frontend for the TCSS 460 Movie and TV Review Platform. Browse popular titles, search movies and TV shows, view details with community ratings, and sign in with the course OIDC provider to access your profile.
 
-First, run the development server:
+**Live site:** [https://group-project-frontend-public-group-3.vercel.app/](https://group-project-frontend-public-group-3.vercel.app/)
+
+## Features
+
+- **Home** — Popular Movies and Popular TV Shows tabs with paginated results (`/?type=movie|show&page=1`)
+- **Search** — Global search bar in the header; filter by movie or TV show (`/search?type=movie|show&title=...`)
+- **Details** — Title overview, poster, cast, genres, and community ratings/reviews (`/details?type=movie|show&id=...`)
+- **Profile** — Signed-in view of account info and token role (`/profile`)
+- **Auth** — Sign in / sign out via Auth.js (NextAuth v5) and the TCSS 460 OIDC issuer
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, React Server Components)
+- [React 19](https://react.dev/) + TypeScript
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [Auth.js / NextAuth v5](https://authjs.dev/) (OIDC)
+- Partner API: [Group 2 backend](https://group-2-9289.onrender.com/api-docs) on Render
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- npm (or pnpm)
+- OIDC client credentials from the TCSS 460 auth-squared admin portal (for sign-in locally)
+
+### Install and run
 
 ```bash
+git clone https://github.com/<your-org>/group-project-frontend-public-group-3.git
+cd group-project-frontend-public-group-3
+npm install
+cp env.local.example .env.local
+# Fill in .env.local (see Environment variables below)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command        | Description              |
+| -------------- | ------------------------ |
+| `npm run dev`  | Start development server |
+| `npm run build`| Production build         |
+| `npm run start`| Run production build     |
+| `npm run lint` | Run ESLint               |
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy `env.local.example` to `.env.local` and set:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Description |
+| -------- | ----------- |
+| `AUTH_SECRET` | Session cookie signing secret (`openssl rand -base64 32`) |
+| `AUTH_URL` | Public origin of this app (e.g. `http://localhost:3000`). Callback: `{AUTH_URL}/api/auth/callback/tcss460` |
+| `AUTH_TCSS460_ISSUER` | OIDC issuer (`https://tcss-460-iam.onrender.com`) |
+| `AUTH_TCSS460_CLIENT_ID` | OIDC client ID from auth-squared |
+| `AUTH_TCSS460_CLIENT_SECRET` | OIDC client secret |
+| `AUTH_TCSS460_AUDIENCE` | Token audience for backend authorization |
+| `API_BASE_URL` | *(Optional)* Group 2 API base URL. Defaults to `https://group-2-9289.onrender.com` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**OAuth tip:** Use the same host in the browser as in `AUTH_URL` (e.g. always `localhost`, not mixing `localhost` and a LAN IP). Mismatched origins often cause `InvalidCheck: state value could not be parsed` during sign-in.
 
-## Deploy on Vercel
+## Backend API
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app consumes the Group 2 REST API (TMDB-backed movie/TV data plus community ratings):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Base URL:** [https://group-2-9289.onrender.com](https://group-2-9289.onrender.com)
+- **Docs:** [OpenAPI / Swagger UI](https://group-2-9289.onrender.com/api-docs)
+- **Reference in repo:** `reference-group-2/backend-reference/`
+
+Public routes used by the frontend include search, popular lists, and title details. Authenticated routes (ratings, reviews, profile) require a valid bearer token from sign-in.
+
+## Project structure
+
+```
+src/
+  app/              # Routes (home, search, details, profile, auth API)
+  components/       # Header, SearchBar, MediaResultCard, tabs, spinner
+  lib/              # Auth, UI tokens, JWT helpers
+lib/
+  api.ts            # Server-side fetch helpers for Group 2 API
+  types.ts          # Shared API response types
+```
+
+## Deployment
+
+The production site is hosted on [Vercel](https://vercel.com/). Set the same environment variables in the Vercel project settings. Ensure the OAuth redirect URI for production is registered in auth-squared:
+
+`https://group-project-frontend-public-group-3.vercel.app/api/auth/callback/tcss460`
+
+## Course context
+
+TCSS 460 — Group Project (Frontend, Group 3). Built to integrate with Group 2’s backend and the shared TCSS 460 identity provider.
