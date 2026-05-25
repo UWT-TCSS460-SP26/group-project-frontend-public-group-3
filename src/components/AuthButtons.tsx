@@ -2,6 +2,8 @@
 
 import { signIn, signOut, useSession } from 'next-auth/react';
 
+import { AUTH_PROVIDER_ID } from '@/src/lib/auth-urls';
+
 const primaryButtonClass =
     'rounded-xl bg-[#0f1f3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1a335c]';
 
@@ -12,7 +14,7 @@ export function SignInButton({ callbackUrl = '/profile' }: { callbackUrl?: strin
     return (
         <button
             type="button"
-            onClick={() => signIn('tcss460', { callbackUrl })}
+            onClick={() => signIn(AUTH_PROVIDER_ID, { callbackUrl })}
             className={primaryButtonClass}
         >
             Sign In
@@ -38,7 +40,7 @@ export function UserBadge() {
     if (status === 'unauthenticated') return <SignInButton />;
     return (
         <span className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-600">{session?.user?.email}</span>
+            <span className="text-sm text-slate-600">Hello, {session?.user?.name}!</span>
             <SignOutButton />
         </span>
     );
