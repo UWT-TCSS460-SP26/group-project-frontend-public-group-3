@@ -72,7 +72,9 @@ This app consumes the Group 2 REST API (TMDB-backed movie/TV data plus community
 
 - **Base URL:** [https://group-2-9289.onrender.com](https://group-2-9289.onrender.com)
 - **Docs:** [OpenAPI / Swagger UI](https://group-2-9289.onrender.com/api-docs)
-- **Reference in repo:** `reference-group-2/backend-reference/`
+- **Bug Tracker URL:** [https://bug-tracker-g2.vercel.app](https://bug-tracker-g2.vercel.app)
+- **API Audience:** group-2-api
+- **README link:** [https://github.com/UWT-TCSS460-SP26/group-project-backend-group-2-3/blob/main/README.md](https://github.com/UWT-TCSS460-SP26/group-project-backend-group-2-3/blob/main/README.md)
 
 Public routes used by the frontend include search, popular lists, and title details. Authenticated routes (ratings, reviews, profile) require a valid bearer token from sign-in.
 
