@@ -50,9 +50,17 @@ export default async function Header() {
               <Link href="/search" className={ui.headerNavLink}>
                 Search
               </Link>
-              <Link href="/profile" className={ui.headerNavLink}>
-                Profile
-              </Link>
+              {session?.user ? (
+                <Link href="/profile" className={ui.headerNavLink}>
+                  Profile
+                </Link>
+              ) : (
+                <form action={signInAction} className="inline">
+                  <button type="submit" className={ui.headerNavLink}>
+                    Profile
+                  </button>
+                </form>
+              )}
             </nav>
           </div>
 
@@ -60,7 +68,7 @@ export default async function Header() {
             {session?.user ? (
               <>
                 <span className="max-w-[16rem] truncate text-sm text-mint/90">
-                  {session.user.email}
+                  Hello, {session.user.name}!
                 </span>
                 <form action={signOutAction}>
                   <button type="submit" className={ui.pillOnDark}>
