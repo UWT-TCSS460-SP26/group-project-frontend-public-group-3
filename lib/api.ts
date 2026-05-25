@@ -73,6 +73,40 @@ export async function searchTvShows(
   return res.json() as Promise<MediaListResponse>;
 }
 
+export async function getPopularMovies(
+  page = 1,
+): Promise<MediaListResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+  });
+
+  const url = `${getApiBaseUrl()}/v1/movies/popular?${params}`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new ApiRequestError(await parseApiError(res), res.status);
+  }
+
+  return res.json() as Promise<MediaListResponse>;
+}
+
+export async function getPopularTvShows(
+  page = 1,
+): Promise<MediaListResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+  });
+
+  const url = `${getApiBaseUrl()}/v1/tv-shows/popular?${params}`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new ApiRequestError(await parseApiError(res), res.status);
+  }
+
+  return res.json() as Promise<MediaListResponse>;
+}
+
 export async function getMovieDetail(id: number): Promise<MovieDetailResponse> {
   const url = `${getApiBaseUrl()}/v1/movies/${id}`;
   const res = await fetch(url);

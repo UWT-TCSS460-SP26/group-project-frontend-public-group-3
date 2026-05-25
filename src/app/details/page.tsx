@@ -8,6 +8,7 @@ import type {
   ReviewResponse,
 } from "@/lib/types";
 import { isMovieDetail } from "@/lib/types";
+import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -71,24 +72,24 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
   const heading = review.title?.trim() || "Review";
 
   return (
-    <article className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4">
+    <article className="rounded-xl border border-border bg-mint-soft/80 p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3
-          className={`text-sm font-semibold text-[#0f1f3d] ${montserrat.className}`}
+          className={`text-sm font-semibold text-brand ${montserrat.className}`}
         >
           {heading}
         </h3>
         <time
           dateTime={review.createdAt}
-          className="text-xs text-slate-500"
+          className="text-xs text-muted"
         >
           {dateFormatter.format(new Date(review.createdAt))}
         </time>
       </div>
-      <p className="mb-2 text-xs font-medium text-[#5b4bb7]">
+      <p className="mb-2 text-xs font-medium text-brand">
         {review.author.username}
       </p>
-      <p className="text-sm leading-relaxed text-slate-600">{review.body}</p>
+      <p className="text-sm leading-relaxed text-muted">{review.body}</p>
     </article>
   );
 }
@@ -98,35 +99,35 @@ function CommunitySection({ community }: { community: CommunitySummary }) {
   const hasReviews = community.recentReviews.length > 0;
 
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+    <section className={`${ui.darkPanel} mb-8`}>
       <h2
-        className={`mb-4 text-lg font-semibold text-[#0f1f3d] ${montserrat.className}`}
+        className={`mb-4 text-lg font-semibold text-white ${montserrat.className}`}
       >
         Community
       </h2>
 
       <dl className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl bg-slate-50 px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="rounded-xl bg-mint-soft px-4 py-3">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
             Average score
           </dt>
-          <dd className="mt-1 text-2xl font-bold text-[#0f1f3d]">
+          <dd className="mt-1 text-2xl font-bold text-brand">
             {hasRatings ? formatScore(community.averageScore) : "—"}
           </dd>
         </div>
-        <div className="rounded-xl bg-slate-50 px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="rounded-xl bg-mint-soft px-4 py-3">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
             Ratings
           </dt>
-          <dd className="mt-1 text-2xl font-bold text-[#0f1f3d]">
+          <dd className="mt-1 text-2xl font-bold text-brand">
             {community.ratingCount}
           </dd>
         </div>
-        <div className="rounded-xl bg-slate-50 px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="rounded-xl bg-mint-soft px-4 py-3">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
             Reviews
           </dt>
-          <dd className="mt-1 text-2xl font-bold text-[#0f1f3d]">
+          <dd className="mt-1 text-2xl font-bold text-brand">
             {community.reviewCount}
           </dd>
         </div>
@@ -134,7 +135,7 @@ function CommunitySection({ community }: { community: CommunitySummary }) {
 
       {hasReviews ? (
         <div>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-mint/90">
             Recent reviews
           </h3>
           <ul className="grid gap-3">
@@ -146,7 +147,7 @@ function CommunitySection({ community }: { community: CommunitySummary }) {
           </ul>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-mint/80">
           No community reviews yet. Be the first to share your thoughts after
           signing in.
         </p>
@@ -161,9 +162,9 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
 
   return (
     <>
-      <section className="mb-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <section className={`mb-8 overflow-hidden ${ui.card}`}>
         <div className="flex flex-col gap-6 p-6 sm:flex-row sm:gap-8">
-          <div className="mx-auto h-72 w-48 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:mx-0">
+          <div className="mx-auto h-72 w-48 shrink-0 overflow-hidden rounded-xl bg-mint-soft sm:mx-0">
             {detail.posterUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- TMDB posters; avoids next.config remotePatterns
               <img
@@ -172,7 +173,7 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-400">
+              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-muted/70">
                 No poster
               </div>
             )}
@@ -180,17 +181,17 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
 
           <div className="min-w-0 flex-1">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#5b4bb7]/10 px-2.5 py-0.5 text-xs font-medium capitalize text-[#5b4bb7]">
+              <span className={mediaBadgeClass(isMovie ? "movie" : "show")}>
                 {mediaLabel}
               </span>
               {detail.status && (
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                <span className={ui.badgeMuted}>
                   {detail.status}
                 </span>
               )}
             </div>
 
-            <p className="mb-4 text-sm text-slate-500">
+            <p className="mb-4 text-sm text-muted">
               Released {formatYear(detail.year)}
               {detail.genres.length > 0 && (
                 <>
@@ -202,10 +203,10 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
 
             <dl className="mb-6 grid gap-3 sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
                   {isMovie ? "Runtime" : "Seasons"}
                 </dt>
-                <dd className="mt-0.5 text-sm font-medium text-[#0f1f3d]">
+                <dd className="mt-0.5 text-sm font-medium text-brand">
                   {isMovie
                     ? formatRuntime(detail.runtimeMinutes)
                     : detail.seasonCount}
@@ -213,29 +214,29 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
               </div>
               {!isMovie && (
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted">
                     Episodes
                   </dt>
-                  <dd className="mt-0.5 text-sm font-medium text-[#0f1f3d]">
+                  <dd className="mt-0.5 text-sm font-medium text-brand">
                     {detail.episodeCount}
                   </dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
                   TMDB rating
                 </dt>
-                <dd className="mt-0.5 text-sm font-medium text-[#0f1f3d]">
+                <dd className="mt-0.5 text-sm font-medium text-brand">
                   {detail.rating.toFixed(1)} / 10
                 </dd>
               </div>
             </dl>
 
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3">
-              <p className="text-sm font-medium text-slate-600">
+            <div className="rounded-xl border border-dashed border-border bg-mint-soft/80 px-4 py-3">
+              <p className="text-sm font-medium text-muted">
                 Sign in to rate
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted">
                 Rating and review actions arrive in a later sprint.
               </p>
             </div>
@@ -243,13 +244,13 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
         </div>
       </section>
 
-      <section className="mb-8 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <section className={`mb-8 ${ui.card}`}>
         <h2
-          className={`mb-3 text-lg font-semibold text-[#0f1f3d] ${montserrat.className}`}
+          className={`mb-3 text-lg font-semibold text-brand ${montserrat.className}`}
         >
           Synopsis
         </h2>
-        <p className="text-sm leading-relaxed text-slate-600">
+        <p className="text-sm leading-relaxed text-muted">
           {detail.overview?.trim() || "No synopsis available."}
         </p>
       </section>
@@ -267,33 +268,20 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
 
   if (id == null) {
     return (
-      <div
-        className={`min-h-screen bg-slate-50 text-slate-800 ${inter.className}`}
-      >
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-          <header className="mb-10">
-            <p className="mb-2 text-sm font-medium uppercase tracking-wide text-[#5b4bb7]">
-              Discover
-            </p>
-            <h1
-              className={`text-3xl font-bold tracking-tight text-[#0f1f3d] sm:text-4xl ${montserrat.className}`}
-            >
-              Details
-            </h1>
+      <div className={`${ui.page} ${inter.className}`}>
+        <div className={ui.container}>
+          <header className="mb-12">
+            <p className={ui.eyebrow}>Discover</p>
+            <h1 className={`${ui.title} ${montserrat.className}`}>Details</h1>
           </header>
-          <section className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm">
-            <p
-              className={`text-lg font-semibold text-[#0f1f3d] ${montserrat.className}`}
-            >
+          <section className={ui.emptyState}>
+            <p className={`text-lg font-semibold text-brand ${montserrat.className}`}>
               Invalid {mediaLabel} link
             </p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-muted">
               Open a title from search or browse to view its details.
             </p>
-            <a
-              href="/search"
-              className="mt-6 inline-block rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#0f1f3d] shadow-sm transition-colors hover:border-[#5b4bb7]/40 hover:text-[#5b4bb7]"
-            >
+            <a href="/search" className={`mt-6 inline-block ${ui.pillSecondary}`}>
               Back to search
             </a>
           </section>
@@ -322,37 +310,27 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
 
   return (
     <div
-      className={`min-h-screen bg-slate-50 text-slate-800 ${inter.className}`}
+      className={`${ui.page} ${inter.className}`}
     >
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-10">
-          <p className="mb-2 text-sm font-medium uppercase tracking-wide text-[#5b4bb7]">
-            Discover
-          </p>
-          <h1
-            className={`text-3xl font-bold tracking-tight text-[#0f1f3d] sm:text-4xl ${montserrat.className}`}
-          >
+      <div className={ui.container}>
+        <header className="mb-12">
+          <p className={ui.eyebrow}>Discover</p>
+          <h1 className={`${ui.title} ${montserrat.className}`}>
             {detail?.title ?? "Details"}
           </h1>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted">
               {mediaType === "movie" ? "Movie" : "TV show"}
               {detail ? ` · TMDB #${detail.id}` : ""}
             </p>
-            <a
-              href="/search"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#0f1f3d] shadow-sm transition-colors hover:border-[#5b4bb7]/40 hover:text-[#5b4bb7]"
-            >
+            <a href="/search" className={ui.pillSecondary}>
               Back to search
             </a>
           </div>
         </header>
 
         {errorMessage && (
-          <section
-            role="alert"
-            className="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-red-800"
-          >
+          <section role="alert" className={`mb-8 ${ui.alert}`}>
             <p className={`font-semibold ${montserrat.className}`}>
               Could not load {mediaLabel}
             </p>

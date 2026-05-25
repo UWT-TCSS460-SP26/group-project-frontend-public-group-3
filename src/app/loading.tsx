@@ -14,15 +14,17 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
-export default function DetailsLoading() {
+export default function HomeLoading() {
   return (
     <div className={`${ui.page} ${inter.className}`}>
       <div className={ui.container}>
         <header className="mb-12">
-          <p className={ui.eyebrow}>Discover</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>Details</h1>
+          <p className={ui.eyebrow}>Browse</p>
+          <h1 className={`${ui.title} ${montserrat.className}`}>
+            Popular Movies
+          </h1>
         </header>
-        <LoadingSpinner label="Fetching title details" />
+        <LoadingSpinner label="Fetching popular titles" />
       </div>
     </div>
   );
