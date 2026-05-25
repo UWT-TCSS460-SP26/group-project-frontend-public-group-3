@@ -31,7 +31,7 @@ Frontend for the TCSS 460 Movie and TV Review Platform. Browse popular titles, s
 ### Install and run
 
 ```bash
-git clone https://github.com/<your-org>/group-project-frontend-public-group-3.git
+git clone <this-repo-url>
 cd group-project-frontend-public-group-3
 npm install
 cp env.local.example .env.local
