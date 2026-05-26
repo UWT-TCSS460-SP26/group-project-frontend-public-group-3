@@ -15,7 +15,7 @@ export const ui = {
   subtitle: "mt-3 max-w-xl text-base leading-relaxed text-muted",
   card: "rounded-3xl border border-border bg-white p-6 shadow-sm",
   cardInteractive:
-    "block w-full rounded-3xl border border-border bg-white p-5 shadow-sm transition-all hover:border-brand/20 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/60",
+    "block w-full rounded-3xl border border-border bg-mint/90 p-5 shadow-sm transition-all hover:border-brand/20 hover:bg-mint hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/60",
   pillPrimary:
     "rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-mint focus:ring-offset-2",
   pillSecondary:
