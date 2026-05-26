@@ -17,6 +17,7 @@ const montserrat = Montserrat({
     display: 'swap',
 });
 
+/** Role lives in the access token payload from auth-squared, not in the OIDC id_token. */
 function getRoleFromAccessToken(accessToken: string | undefined): string {
     if (!accessToken) return '—';
 

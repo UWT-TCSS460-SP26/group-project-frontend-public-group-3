@@ -1,3 +1,4 @@
+/** Client-side JWT inspection for display only — never use for authorization. */
 export interface DecodedJwt {
     header: Record<string, unknown>;
     payload: Record<string, unknown>;
@@ -9,6 +10,7 @@ function base64UrlDecode(input: string): string {
         .replace(/-/g, '+')
         .replace(/_/g, '/')
         .padEnd(input.length + ((4 - (input.length % 4)) % 4), '=');
+    // Profile runs on the server (Buffer); any future client use needs atob.
     if (typeof window !== 'undefined') {
         return decodeURIComponent(
             atob(padded)

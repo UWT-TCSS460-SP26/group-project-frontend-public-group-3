@@ -1,6 +1,7 @@
 import 'next-auth';
 import 'next-auth/jwt';
 
+/** Extends Auth.js types so tokens copied in `auth.ts` callbacks are typed on Session/JWT. */
 declare module 'next-auth' {
     interface Session {
         accessToken?: string;
