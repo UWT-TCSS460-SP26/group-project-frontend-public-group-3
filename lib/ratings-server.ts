@@ -90,6 +90,7 @@ export async function getMyRatingForTitle(
   tmdbId: number,
   mediaType: MediaType,
 ): Promise<EnrichedRatingResponse | null> {
+  const myRatingIds = new Set<number>();
   const pageSize = 50;
   let page = 1;
   let totalPages = 1;
@@ -108,8 +109,23 @@ export async function getMyRatingForTitle(
       return found;
     }
 
+    for (const rating of data.results) {
+      myRatingIds.add(rating.id);
+    }
+
     totalPages = data.totalPages;
     page += 1;
+  }
+
+  if (myRatingIds.size === 0) {
+    return null;
+  }
+
+  const titleRatings = await listRatingsForTitle(tmdbId, mediaType);
+  const found =
+    titleRatings.find((rating) => myRatingIds.has(rating.id)) ?? null;
+  if (found) {
+    return { ...found, tmdbId, tmdb: null };
   }
 
   return null;
