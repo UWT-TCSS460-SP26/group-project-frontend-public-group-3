@@ -1,6 +1,7 @@
 import { Inter, Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ApiRequestError, getMovieDetail, getShowDetail } from "@/lib/api";
+import { getMyRatingForTitle } from "@/lib/ratings-server";
 import type {
   CommunitySummary,
   MediaDetailResponse,
@@ -8,6 +9,8 @@ import type {
   ReviewResponse,
 } from "@/lib/types";
 import { isMovieDetail } from "@/lib/types";
+import RatingControl from "@/src/components/RatingControl";
+import { auth } from "@/src/lib/auth";
 import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
 const inter = Inter({
@@ -156,7 +159,24 @@ function CommunitySection({ community }: { community: CommunitySummary }) {
   );
 }
 
-function DetailContent({ detail }: { detail: MediaDetailResponse }) {
+type UserRatingState = {
+  id: number;
+  score: number;
+};
+
+function DetailContent({
+  detail,
+  mediaType,
+  isSignedIn,
+  signInCallbackUrl,
+  userRating,
+}: {
+  detail: MediaDetailResponse;
+  mediaType: DetailMediaType;
+  isSignedIn: boolean;
+  signInCallbackUrl: string;
+  userRating: UserRatingState | null;
+}) {
   const isMovie = isMovieDetail(detail);
   const mediaLabel = isMovie ? "movie" : "TV show";
 
@@ -232,14 +252,18 @@ function DetailContent({ detail }: { detail: MediaDetailResponse }) {
               </div>
             </dl>
 
-            <div className="rounded-xl border border-dashed border-border bg-mint-soft/80 px-4 py-3">
-              <p className="text-sm font-medium text-muted">
-                Sign in to rate
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                Rating and review actions arrive in a later sprint.
-              </p>
-            </div>
+            <RatingControl
+              key={
+                userRating
+                  ? `${userRating.id}-${userRating.score}`
+                  : "no-rating"
+              }
+              tmdbId={detail.id}
+              mediaType={mediaType}
+              isSignedIn={isSignedIn}
+              signInCallbackUrl={signInCallbackUrl}
+              initialRating={userRating}
+            />
           </div>
         </div>
       </section>
@@ -290,8 +314,13 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
     );
   }
 
+  const session = await auth();
+  const isSignedIn = Boolean(session?.accessToken);
+  const signInCallbackUrl = `/details?type=${mediaType}&id=${id}`;
+
   let detail: MediaDetailResponse | null = null;
   let errorMessage: string | null = null;
+  let userRating: UserRatingState | null = null;
 
   try {
     detail =
@@ -306,6 +335,17 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
       err instanceof Error
         ? err.message
         : "We could not load this title. Please try again.";
+  }
+
+  if (isSignedIn && detail) {
+    try {
+      const existing = await getMyRatingForTitle(id, mediaType);
+      if (existing) {
+        userRating = { id: existing.id, score: existing.score };
+      }
+    } catch {
+      // Rating lookup is optional; detail page still renders.
+    }
   }
 
   return (
@@ -338,7 +378,15 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
           </section>
         )}
 
-        {detail && <DetailContent detail={detail} />}
+        {detail && (
+          <DetailContent
+            detail={detail}
+            mediaType={mediaType}
+            isSignedIn={isSignedIn}
+            signInCallbackUrl={signInCallbackUrl}
+            userRating={userRating}
+          />
+        )}
       </div>
     </div>
   );

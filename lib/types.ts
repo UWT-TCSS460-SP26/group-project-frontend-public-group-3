@@ -78,3 +78,30 @@ export function isMovieDetail(
 ): detail is MovieDetailResponse {
   return "runtimeMinutes" in detail;
 }
+
+export type RatingResponse = {
+  id: number;
+  mediaType: MediaType;
+  score: number;
+  createdAt: string;
+  updatedAt: string;
+  author: UserContentAuthor;
+};
+
+export type EnrichedRatingResponse = RatingResponse & {
+  tmdbId: number;
+  tmdb: {
+    title: string;
+    year: number | null;
+    posterUrl: string | null;
+    overview: string;
+  } | null;
+};
+
+export type EnrichedRatingListResponse = {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalResults: number;
+  results: EnrichedRatingResponse[];
+};
