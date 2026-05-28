@@ -2,6 +2,7 @@ import { Inter, Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ApiRequestError, getMovieDetail, getShowDetail } from "@/lib/api";
 import { getMyRatingForTitle } from "@/lib/ratings-server";
+import { getMyReviewForTitle } from "@/lib/reviews-server";
 import type {
   CommunitySummary,
   MediaDetailResponse,
@@ -10,6 +11,7 @@ import type {
 } from "@/lib/types";
 import { isMovieDetail } from "@/lib/types";
 import RatingControl from "@/src/components/RatingControl";
+import ReviewControl from "@/src/components/ReviewControl";
 import { auth } from "@/src/lib/auth";
 import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
@@ -78,7 +80,7 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
     <article className="rounded-xl border border-border bg-mint-soft/80 p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3
-          className={`text-sm font-semibold text-brand ${montserrat.className}`}
+          className={`text-sm font-bold text-brand drop-shadow-[0_1px_1px_rgba(15,31,61,0.18)] ${montserrat.className}`}
         >
           {heading}
         </h3>
@@ -92,7 +94,7 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
       <p className="mb-2 text-xs font-medium text-brand">
         {review.author.username}
       </p>
-      <p className="text-sm leading-relaxed text-muted">{review.body}</p>
+      <p className="text-sm leading-relaxed text-slate-700">{review.body}</p>
     </article>
   );
 }
@@ -164,18 +166,28 @@ type UserRatingState = {
   score: number;
 };
 
+type UserReviewState = {
+  id: number;
+  title: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 function DetailContent({
   detail,
   mediaType,
   isSignedIn,
   signInCallbackUrl,
   userRating,
+  userReview,
 }: {
   detail: MediaDetailResponse;
   mediaType: DetailMediaType;
   isSignedIn: boolean;
   signInCallbackUrl: string;
   userRating: UserRatingState | null;
+  userReview: UserReviewState | null;
 }) {
   const isMovie = isMovieDetail(detail);
   const mediaLabel = isMovie ? "movie" : "TV show";
@@ -264,6 +276,16 @@ function DetailContent({
               signInCallbackUrl={signInCallbackUrl}
               initialRating={userRating}
             />
+
+            <div className="mt-4">
+              <ReviewControl
+                tmdbId={detail.id}
+                mediaType={mediaType}
+                isSignedIn={isSignedIn}
+                signInCallbackUrl={signInCallbackUrl}
+                existingReview={userReview}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -321,6 +343,7 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
   let detail: MediaDetailResponse | null = null;
   let errorMessage: string | null = null;
   let userRating: UserRatingState | null = null;
+  let userReview: UserReviewState | null = null;
 
   try {
     detail =
@@ -345,6 +368,20 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
       }
     } catch {
       // Rating lookup is optional; detail page still renders.
+    }
+    try {
+      const existingReview = await getMyReviewForTitle(id, mediaType);
+      if (existingReview) {
+        userReview = {
+          id: existingReview.id,
+          title: existingReview.title,
+          body: existingReview.body,
+          createdAt: existingReview.createdAt,
+          updatedAt: existingReview.updatedAt,
+        };
+      }
+    } catch {
+      // Review lookup is optional; detail page still renders.
     }
   }
 
@@ -385,6 +422,7 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
             isSignedIn={isSignedIn}
             signInCallbackUrl={signInCallbackUrl}
             userRating={userRating}
+            userReview={userReview}
           />
         )}
       </div>

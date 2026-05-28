@@ -23,7 +23,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 async function partnerAuthedFetch<T>(
-  method: "GET" | "POST" | "PUT",
+  method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -49,6 +49,10 @@ async function partnerAuthedFetch<T>(
       // use default message
     }
     throw new ApiRequestError(message, res.status);
+  }
+
+  if (res.status === 204) {
+    return undefined as T;
   }
 
   return res.json() as Promise<T>;
@@ -130,6 +134,10 @@ export async function updateRating(
   return partnerAuthedFetch<RatingResponse>("PUT", `/v1/ratings/${ratingId}`, {
     score,
   });
+}
+
+export async function deleteRating(ratingId: number): Promise<void> {
+  await partnerAuthedFetch<void>("DELETE", `/v1/ratings/${ratingId}`);
 }
 
 export async function submitRating(

@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { submitRatingAction } from "@/src/lib/rating-actions";
+import { deleteRatingAction, submitRatingAction } from "@/src/lib/rating-actions";
 import type { MediaType } from "@/lib/types";
 import { AUTH_PROVIDER_ID } from "@/src/lib/auth-urls";
 
@@ -145,15 +145,50 @@ export default function RatingControl({
     });
   }
 
+  function handleDelete() {
+    if (ratingId == null) {
+      setScore(0);
+      window.localStorage.removeItem(storageKey);
+      setSavedMessage("Rating cleared.");
+      return;
+    }
+    setError(null);
+    setSavedMessage(null);
+    startTransition(async () => {
+      const result = await deleteRatingAction(ratingId);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setRatingId(null);
+      setScore(0);
+      window.localStorage.removeItem(storageKey);
+      setSavedMessage("Rating deleted.");
+      router.refresh();
+    });
+  }
+
   return (
     <div className="rounded-xl border border-border bg-mint-soft/80 px-4 py-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-brand">Your rating</p>
-        {score > 0 && (
-          <p className="text-xs font-semibold text-muted">
-            {score} / {STAR_COUNT}
-          </p>
-        )}
+        <div className="flex items-center gap-2">
+          {score > 0 && (
+            <p className="text-xs font-semibold text-muted">
+              {score} / {STAR_COUNT}
+            </p>
+          )}
+          {(score > 0 || ratingId != null) && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isPending}
+              className="rounded-md border border-red-300 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60"
+            >
+              Delete rating
+            </button>
+          )}
+        </div>
       </div>
       {score > 0 && (
         <p className="mb-2 text-xs text-muted">

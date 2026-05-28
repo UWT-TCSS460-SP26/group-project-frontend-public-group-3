@@ -35,6 +35,14 @@ export type ReviewResponse = {
   author: UserContentAuthor;
 };
 
+export type ReviewListResponse = {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalResults: number;
+  results: ReviewResponse[];
+};
+
 export type CommunitySummary = {
   averageScore: number | null;
   ratingCount: number;
