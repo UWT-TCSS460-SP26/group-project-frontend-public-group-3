@@ -2,6 +2,8 @@ import { Inter, Montserrat } from "next/font/google";
 import { searchMovies, searchTvShows } from "@/lib/api";
 import type { MediaListItem, MediaType } from "@/lib/types";
 import MediaResultCard from "@/src/components/MediaResultCard";
+import PaginationNav from "@/src/components/PaginationNav";
+import { parsePageParam } from "@/src/lib/pagination";
 import { ui } from "@/src/lib/ui";
 
 const inter = Inter({
@@ -42,7 +44,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const mediaType = parseMediaType(params.type);
   const title = params.title?.trim() ?? "";
-  const page = Math.max(1, Number(params.page) || 1);
+  const page = parsePageParam(params.page);
   const hasQuery = title.length > 0;
 
   const isMovie = mediaType === "movie";
@@ -119,6 +121,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               )}
             </div>
 
+            <PaginationNav
+              currentPage={currentPage}
+              totalPages={totalPages}
+              buildHref={(p) => buildSearchHref(mediaType, title, p)}
+              ariaLabel="Search results pagination (top)"
+              formAction="/search"
+              formFields={{ type: mediaType, title }}
+              placement="top"
+            />
+
             <ul className="grid gap-5">
               {results.map((item) => (
                 <li key={`${item.mediaType}-${item.id}`}>
@@ -127,33 +139,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               ))}
             </ul>
 
-            {totalPages > 1 && (
-              <nav
-                className="mt-10 flex items-center justify-between gap-4 border-t border-border pt-8"
-                aria-label="Search results pagination"
-              >
-                {currentPage > 1 ? (
-                  <a
-                    href={buildSearchHref(mediaType, title, currentPage - 1)}
-                    className={ui.paginationLink}
-                  >
-                    Previous
-                  </a>
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-                {currentPage < totalPages ? (
-                  <a
-                    href={buildSearchHref(mediaType, title, currentPage + 1)}
-                    className={ui.pillMint}
-                  >
-                    Next
-                  </a>
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-              </nav>
-            )}
+            <PaginationNav
+              currentPage={currentPage}
+              totalPages={totalPages}
+              buildHref={(p) => buildSearchHref(mediaType, title, p)}
+              ariaLabel="Search results pagination (bottom)"
+              formAction="/search"
+              formFields={{ type: mediaType, title }}
+              placement="bottom"
+            />
           </section>
         )}
 

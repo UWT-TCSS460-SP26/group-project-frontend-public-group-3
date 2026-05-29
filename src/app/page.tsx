@@ -1,9 +1,19 @@
 import { Inter, Montserrat } from "next/font/google";
+import { redirect } from "next/navigation";
 
 import { getPopularMovies, getPopularTvShows } from "@/lib/api";
 import type { MediaListItem, MediaType } from "@/lib/types";
 import MediaResultCard from "@/src/components/MediaResultCard";
+import PaginationNav from "@/src/components/PaginationNav";
 import PopularBrowseTabs from "@/src/components/PopularBrowseTabs";
+import {
+  TMDB_MAX_PAGE,
+  capPopularBrowsableResults,
+  capPopularTotalPages,
+  clampPage,
+  parsePopularPageParam,
+  parseRawPageParam,
+} from "@/src/lib/pagination";
 import { ui } from "@/src/lib/ui";
 
 const inter = Inter({
@@ -38,15 +48,21 @@ function buildPageHref(type: BrowseMediaType, page: number): string {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const mediaType = parseMediaType(params.type);
-  const page = Math.max(1, Number(params.page) || 1);
+
+  const requestedPage = parseRawPageParam(params.page);
+  if (requestedPage !== null && requestedPage > TMDB_MAX_PAGE) {
+    redirect(buildPageHref(mediaType, TMDB_MAX_PAGE));
+  }
+
+  const page = parsePopularPageParam(params.page);
   const isMovie = mediaType === "movie";
   const mediaLabelPlural = isMovie ? "movies" : "TV shows";
   const pageTitle = isMovie ? "Popular Movies" : "Popular TV Shows";
 
   let errorMessage: string | null = null;
   let results: MediaListItem[] = [];
-  let totalResults = 0;
-  let totalPages = 0;
+  let browsableCount = 0;
+  let paginationTotalPages = 0;
   let currentPage = 1;
 
   try {
@@ -54,9 +70,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ? await getPopularMovies(page)
       : await getPopularTvShows(page);
     results = data.results;
-    totalResults = data.totalResults;
-    totalPages = data.totalPages;
-    currentPage = data.page;
+    paginationTotalPages = capPopularTotalPages(data.totalPages);
+    currentPage = clampPage(data.page, paginationTotalPages);
+    browsableCount = capPopularBrowsableResults(
+      data.totalResults,
+      paginationTotalPages,
+      currentPage,
+      results.length,
+    );
   } catch (err) {
     errorMessage =
       err instanceof Error
@@ -102,18 +123,28 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <section>
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <p className="text-sm text-muted">
-                <span className="font-semibold text-brand">{totalResults}</span>{" "}
+                <span className="font-semibold text-brand">{browsableCount}</span>{" "}
                 popular{" "}
                 {mediaLabelPlural === "movies"
-                  ? `movie${totalResults === 1 ? "" : "s"}`
-                  : `TV show${totalResults === 1 ? "" : "s"}`}
+                  ? `movie${browsableCount === 1 ? "" : "s"}`
+                  : `TV show${browsableCount === 1 ? "" : "s"}`}
               </p>
-              {totalPages > 1 && (
+              {paginationTotalPages > 1 && (
                 <p className="text-sm text-muted">
-                  Page {currentPage} of {totalPages}
+                  Page {currentPage} of {paginationTotalPages}
                 </p>
               )}
             </div>
+
+            <PaginationNav
+              currentPage={currentPage}
+              totalPages={paginationTotalPages}
+              buildHref={(p) => buildPageHref(mediaType, p)}
+              ariaLabel={`Popular ${mediaLabelPlural} pagination (top)`}
+              formAction="/"
+              formFields={{ type: mediaType }}
+              placement="top"
+            />
 
             <ul className="grid gap-5">
               {results.map((item) => (
@@ -123,33 +154,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               ))}
             </ul>
 
-            {totalPages > 1 && (
-              <nav
-                className="mt-10 flex items-center justify-between gap-4 border-t border-border pt-8"
-                aria-label={`Popular ${mediaLabelPlural} pagination`}
-              >
-                {currentPage > 1 ? (
-                  <a
-                    href={buildPageHref(mediaType, currentPage - 1)}
-                    className={ui.paginationLink}
-                  >
-                    Previous
-                  </a>
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-                {currentPage < totalPages ? (
-                  <a
-                    href={buildPageHref(mediaType, currentPage + 1)}
-                    className={ui.pillMint}
-                  >
-                    Next
-                  </a>
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-              </nav>
-            )}
+            <PaginationNav
+              currentPage={currentPage}
+              totalPages={paginationTotalPages}
+              buildHref={(p) => buildPageHref(mediaType, p)}
+              ariaLabel={`Popular ${mediaLabelPlural} pagination (bottom)`}
+              formAction="/"
+              formFields={{ type: mediaType }}
+              placement="bottom"
+            />
           </section>
         )}
       </div>

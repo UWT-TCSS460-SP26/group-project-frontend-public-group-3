@@ -39,7 +39,25 @@ export const ui = {
   emptyState:
     "rounded-3xl border border-dashed border-border bg-white px-6 py-14 text-center shadow-sm",
   paginationLink:
-    "rounded-full border border-border bg-white px-5 py-2 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft",
+    "rounded-full border border-border bg-white px-5 py-2 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft focus:outline-none focus:ring-2 focus:ring-mint/50",
+  paginationNavTop:
+    "mb-8 flex flex-col gap-4 border-b border-border pb-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between",
+  paginationNavBottom:
+    "mt-10 flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between",
+  paginationControls:
+    "flex flex-wrap items-center justify-center gap-2 sm:justify-start",
+  paginationPages: "flex flex-wrap items-center justify-center gap-1",
+  paginationPageLink:
+    "inline-flex min-w-9 items-center justify-center rounded-full border border-border bg-white px-3 py-2 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft focus:outline-none focus:ring-2 focus:ring-mint/50",
+  paginationPageActive:
+    "inline-flex min-w-9 items-center justify-center rounded-full bg-mint px-3 py-2 text-sm font-semibold text-brand shadow-sm",
+  paginationEllipsis: "px-1 text-sm text-muted",
+  paginationDisabled:
+    "rounded-full border border-border bg-surface px-5 py-2 text-sm font-medium text-muted",
+  paginationJumpForm: "flex flex-wrap items-center justify-center gap-2 sm:justify-end",
+  paginationJumpLabel: "text-sm font-medium text-muted",
+  paginationJumpInput:
+    "w-20 rounded-full border border-border bg-white px-3 py-2 text-center text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-mint/50",
   alert: "rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-red-800",
   statBox: "rounded-2xl bg-mint-soft px-4 py-3",
   loadingCard:

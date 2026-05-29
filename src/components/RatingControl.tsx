@@ -104,7 +104,7 @@ export default function RatingControl({
         <button
           type="button"
           onClick={() => signIn(AUTH_PROVIDER_ID, { callbackUrl: signInCallbackUrl })}
-          className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
+          className="cursor-pointer text-sm font-semibold text-brand underline-offset-2 hover:underline"
         >
           Sign in to rate
         </button>
