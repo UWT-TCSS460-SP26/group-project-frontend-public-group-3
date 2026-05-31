@@ -18,7 +18,6 @@ export default auth((request) => {
 /** Only these paths require a session; public routes (e.g. `/search`) are omitted. */
 export const config = {
     matcher: [
-        '/profile',
         '/dashboard',
         '/messages/view',
         '/messages/view/:id',

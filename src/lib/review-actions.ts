@@ -30,6 +30,29 @@ export async function upsertReviewAction(
         ? await createReview(tmdbId, mediaType, title, body)
         : await updateReview(existingReviewId, title, body);
     revalidatePath("/details");
+    revalidatePath("/profile");
+    return { ok: true, review };
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Could not save your review.";
+    return { ok: false, error: message };
+  }
+}
+
+/** Updates an existing review (does not need tmdbId). */
+export async function saveReviewAction(
+  reviewId: number,
+  title: string,
+  body: string,
+): Promise<UpsertReviewResult> {
+  try {
+    const review = await updateReview(reviewId, title, body);
+    revalidatePath("/details");
+    revalidatePath("/profile");
     return { ok: true, review };
   } catch (err) {
     const message =
@@ -48,6 +71,7 @@ export async function deleteReviewAction(
   try {
     await deleteReview(reviewId);
     revalidatePath("/details");
+    revalidatePath("/profile");
     return { ok: true };
   } catch (err) {
     const message =

@@ -86,6 +86,26 @@ async function listRatingsForTitle(
   return all;
 }
 
+/** All enriched ratings for the signed-in user (paginated server-side). */
+export async function fetchAllMyRatings(): Promise<EnrichedRatingResponse[]> {
+  const pageSize = 50;
+  let page = 1;
+  let totalPages = 1;
+  const all: EnrichedRatingResponse[] = [];
+
+  while (page <= totalPages) {
+    const data = await partnerAuthedFetch<EnrichedRatingListResponse>(
+      "GET",
+      `/v1/me/ratings?page=${page}&pageSize=${pageSize}`,
+    );
+    all.push(...data.results);
+    totalPages = data.totalPages;
+    page += 1;
+  }
+
+  return all;
+}
+
 export async function getMyRatingForTitle(
   tmdbId: number,
   mediaType: MediaType,
