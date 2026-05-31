@@ -324,6 +324,10 @@ function AccountInfoCard({
   sub: string;
   role: string;
 }) {
+  const displayName = username.includes("@")
+    ? username.split("@")[0]
+    : username;
+
   return (
     <section className={ui.card} aria-labelledby="account-info-heading">
       <h2
@@ -336,7 +340,7 @@ function AccountInfoCard({
         <div className={ui.statBox}>
           <dt className={ui.label}>Username</dt>
           <dd className="mt-1 break-all text-sm font-medium text-brand">
-            {username}
+            {displayName}
           </dd>
         </div>
         <div className={ui.statBox}>
@@ -956,13 +960,17 @@ function AuthenticatedProfileShell({
 > & {
   initialLoadError: string | null;
 }) {
+  const displayName = username.includes("@")
+    ? username.split("@")[0]
+    : username;
+
   return (
     <div className={`${ui.page} ${inter.className}`}>
       <div className={ui.container}>
         <header className="mb-10">
           <p className={ui.eyebrow}>Profile Hub</p>
           <h1 className={`${ui.title} ${montserrat.className}`}>
-            Welcome back, {username}
+            Welcome back, {displayName}
           </h1>
           <p className={ui.subtitle}>
             Your ratings, reviews, and recent activity in one place.
@@ -1043,5 +1051,23 @@ export default function ProfileHub({
     );
   }
 
-  return <ProfileClientRefresh />;
+  const clientUsername = getDisplayUsername(
+    session.user?.name,
+    session.user?.email,
+    accessToken,
+  );
+  const clientSub = session.user?.id ?? "—";
+  const clientRole = getRoleFromAccessToken(accessToken);
+
+  return (
+    <AuthenticatedProfileShell
+      username={clientUsername}
+      sub={clientSub}
+      role={clientRole}
+      initialRatings={initialRatings}
+      initialReviews={initialReviews}
+      reviewMetaLookup={reviewMetaLookup}
+      initialLoadError={initialLoadError}
+    />
+  );
 }
