@@ -16,6 +16,10 @@ export function getDisplayUsername(
   email: string | null | undefined,
   accessToken: string | undefined,
 ): string {
+  if (email?.trim()) {
+    const local = email.split("@")[0];
+    if (local) return local;
+  }
   if (name?.trim()) return name.trim();
   if (accessToken) {
     try {
@@ -27,10 +31,6 @@ export function getDisplayUsername(
     } catch {
       // fall through
     }
-  }
-  if (email?.trim()) {
-    const local = email.split("@")[0];
-    if (local) return local;
   }
   return "there";
 }
