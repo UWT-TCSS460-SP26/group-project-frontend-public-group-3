@@ -13,6 +13,7 @@ import { isMovieDetail } from "@/lib/types";
 import RatingControl from "@/src/components/RatingControl";
 import ReviewControl from "@/src/components/ReviewControl";
 import { auth } from "@/src/lib/auth";
+import { formatDisplayDate } from "@/src/lib/format-date";
 import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
 const inter = Inter({
@@ -31,12 +32,6 @@ type DetailMediaType = Extract<MediaType, "movie" | "show">;
 type DetailsPageProps = {
   searchParams: Promise<{ type?: string; id?: string }>;
 };
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
 
 function parseMediaType(value: string | undefined): DetailMediaType {
   return value === "show" ? "show" : "movie";
@@ -88,7 +83,7 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
           dateTime={review.createdAt}
           className="text-xs text-muted"
         >
-          {dateFormatter.format(new Date(review.createdAt))}
+          {formatDisplayDate(review.createdAt)}
         </time>
       </div>
       <p className="mb-2 text-xs font-medium text-brand">

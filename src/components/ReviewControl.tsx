@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useMemo, useState, useTransition } from "react";
 import type { MediaType } from "@/lib/types";
 import { AUTH_PROVIDER_ID } from "@/src/lib/auth-urls";
+import { formatDisplayDateTime } from "@/src/lib/format-date";
 import { deleteReviewAction, upsertReviewAction } from "@/src/lib/review-actions";
 
 type ExistingReview = {
@@ -21,14 +22,6 @@ type ReviewControlProps = {
   signInCallbackUrl: string;
   existingReview: ExistingReview | null;
 };
-
-const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
 
 export default function ReviewControl({
   tmdbId,
@@ -171,8 +164,8 @@ export default function ReviewControl({
           )}
           <p className="mt-1 text-sm leading-relaxed text-slate-700">{review.body}</p>
           <p className="mt-3 text-xs text-muted">
-            Created {timeFormatter.format(new Date(review.createdAt))} · Updated{" "}
-            {timeFormatter.format(new Date(review.updatedAt))}
+            Created {formatDisplayDateTime(review.createdAt)} · Updated{" "}
+            {formatDisplayDateTime(review.updatedAt)}
           </p>
         </div>
       ) : (

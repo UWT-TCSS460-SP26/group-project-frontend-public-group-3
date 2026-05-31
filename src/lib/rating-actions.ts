@@ -26,6 +26,7 @@ export async function submitRatingAction(
       existingRatingId,
     );
     revalidatePath("/details");
+    revalidatePath("/profile");
     return { ok: true, rating };
   } catch (err) {
     const message =
@@ -44,6 +45,7 @@ export async function deleteRatingAction(
   try {
     await deleteRating(ratingId);
     revalidatePath("/details");
+    revalidatePath("/profile");
     return { ok: true };
   } catch (err) {
     const message =
