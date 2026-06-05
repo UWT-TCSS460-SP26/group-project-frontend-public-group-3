@@ -34,12 +34,14 @@ export default function PaginationNav({
     >
       <div className={ui.paginationControls}>
         {currentPage > 1 ? (
-          <a href={buildHref(currentPage - 1)} className={ui.paginationLink}>
-            Previous
+          <a href={buildHref(currentPage - 1)} className={`${ui.paginationLink} ${ui.paginationPrev}`}>
+            <span className="sm:hidden">Prev</span>
+            <span className="hidden sm:inline">Previous</span>
           </a>
         ) : (
-          <span className={ui.paginationDisabled} aria-disabled="true">
-            Previous
+          <span className={`${ui.paginationDisabled} ${ui.paginationPrev}`} aria-disabled="true">
+            <span className="sm:hidden">Prev</span>
+            <span className="hidden sm:inline">Previous</span>
           </span>
         )}
 
@@ -66,11 +68,11 @@ export default function PaginationNav({
         </ol>
 
         {currentPage < totalPages ? (
-          <a href={buildHref(currentPage + 1)} className={ui.paginationLink}>
+          <a href={buildHref(currentPage + 1)} className={`${ui.paginationLink} ${ui.paginationNext}`}>
             Next
           </a>
         ) : (
-          <span className={ui.paginationDisabled} aria-disabled="true">
+          <span className={`${ui.paginationDisabled} ${ui.paginationNext}`} aria-disabled="true">
             Next
           </span>
         )}

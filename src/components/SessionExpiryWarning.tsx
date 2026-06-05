@@ -24,12 +24,16 @@ function formatMinutesRemaining(ms: number): string {
     return minutes === 1 ? '1 minute' : `${minutes} minutes`;
 }
 
-type ExpiryState = 'hidden' | 'warning' | 'expired';
+type ExpiryState = 'warning' | 'expired';
 
-export default function SessionExpiryWarning() {
-    const { data: session, status } = useSession();
-    const pathname = usePathname();
-    const [expiryState, setExpiryState] = useState<ExpiryState>('hidden');
+type SessionExpiryTimerProps = {
+    expiresAt: number;
+    callbackPath: string;
+};
+
+function SessionExpiryTimer({ expiresAt, callbackPath }: SessionExpiryTimerProps) {
+    const [expiryState, setExpiryState] = useState<ExpiryState | null>(null);
+    const [minutesLabel, setMinutesLabel] = useState('');
     const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const expiredTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -45,24 +49,15 @@ export default function SessionExpiryWarning() {
     }, []);
 
     useEffect(() => {
-        clearTimers();
-        setExpiryState('hidden');
-
-        if (status !== 'authenticated') {
-            return;
-        }
-
-        const expiresAt = session?.accessTokenExpires;
-        if (expiresAt == null) {
-            return;
-        }
-
         const warningBeforeMs = getWarningBeforeMs();
         const now = Date.now();
         const msUntilExpiry = expiresAt - now;
         const msUntilWarning = msUntilExpiry - warningBeforeMs;
 
-        const showWarning = () => setExpiryState('warning');
+        const showWarning = () => {
+            setMinutesLabel(formatMinutesRemaining(Math.max(0, expiresAt - Date.now())));
+            setExpiryState('warning');
+        };
         const showExpired = () => setExpiryState('expired');
 
         if (msUntilExpiry <= 0) {
@@ -80,24 +75,20 @@ export default function SessionExpiryWarning() {
         expiredTimerRef.current = setTimeout(showExpired, msUntilExpiry);
 
         return clearTimers;
-    }, [status, session?.accessTokenExpires, clearTimers]);
+    }, [expiresAt, clearTimers]);
 
-    if (expiryState === 'hidden') {
+    if (expiryState == null) {
         return null;
     }
 
     const isExpired = expiryState === 'expired';
-    const expiresAt = session?.accessTokenExpires;
-    const msRemaining =
-        expiresAt != null ? Math.max(0, expiresAt - Date.now()) : 0;
-
     const title = isExpired ? 'Session expired' : 'Session expiring soon';
     const message = isExpired
         ? 'Your session has expired. Sign in again to continue using your account.'
-        : `Your session expires in about ${formatMinutesRemaining(msRemaining)}. Sign in again to stay signed in.`;
+        : `Your session expires in about ${minutesLabel}. Sign in again to stay signed in.`;
 
     const handleSignIn = () => {
-        void signIn(AUTH_PROVIDER_ID, { callbackUrl: pathname || '/profile' });
+        void signIn(AUTH_PROVIDER_ID, { callbackUrl: callbackPath || '/profile' });
     };
 
     return (
@@ -115,14 +106,14 @@ export default function SessionExpiryWarning() {
                 <h2 id="session-expiry-title" className="text-lg font-semibold text-brand">
                     {title}
                 </h2>
-                <p id="session-expiry-message" className="mt-2 text-sm leading-relaxed text-muted">
+                <p id="session-expiry-message" className="mt-2 text-sm leading-relaxed text-prose">
                     {message}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-end gap-3">
                     {!isExpired && (
                         <button
                             type="button"
-                            onClick={() => setExpiryState('hidden')}
+                            onClick={() => setExpiryState(null)}
                             className={ui.pillSecondary}
                         >
                             Continue
@@ -134,5 +125,23 @@ export default function SessionExpiryWarning() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SessionExpiryWarning() {
+    const { data: session, status } = useSession();
+    const pathname = usePathname();
+    const expiresAt = session?.accessTokenExpires;
+
+    if (status !== 'authenticated' || expiresAt == null) {
+        return null;
+    }
+
+    return (
+        <SessionExpiryTimer
+            key={expiresAt}
+            expiresAt={expiresAt}
+            callbackPath={pathname || '/profile'}
+        />
     );
 }

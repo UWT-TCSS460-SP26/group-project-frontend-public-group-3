@@ -48,7 +48,7 @@ export default function MediaResultCard({ item }: { item: MediaListItem }) {
             <span className={mediaBadgeClass(item.mediaType)}>{item.mediaType}</span>
           </div>
           <p className="mb-2 text-sm text-muted">{yearLabel}</p>
-          <p className="line-clamp-3 text-sm leading-relaxed text-muted">
+          <p className="line-clamp-3 text-sm leading-relaxed text-prose">
             {item.overview}
           </p>
         </div>

@@ -2,10 +2,8 @@
 
 import { Inter, Montserrat } from "next/font/google";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -288,7 +286,7 @@ function RecentActivitySection({ items }: { items: ActivityItem[] }) {
             </div>
             <div className="mt-2 flex flex-wrap justify-center gap-1">
               {item.hasRating && (
-                <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-white">
+                <span className="rounded-full bg-brand-bg px-2 py-0.5 text-xs font-medium text-white">
                   Rated {item.score}/10
                 </span>
               )}
@@ -669,7 +667,7 @@ function ReviewRow({
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   rows={4}
-                  className="mt-1 w-full max-w-xl rounded-2xl border border-border bg-white px-4 py-3 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-mint/50"
+                  className="mt-1 w-full max-w-xl rounded-2xl border border-border bg-card px-4 py-3 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-mint/50"
                   disabled={isPending}
                 />
               </div>
@@ -707,7 +705,7 @@ function ReviewRow({
                 </h3>
               )}
               <p
-                className={`text-sm leading-relaxed text-slate-700 ${reviewTitle ? "mt-2" : ""}`}
+                className={`text-sm leading-relaxed text-prose ${reviewTitle ? "mt-2" : ""}`}
               >
                 {review.body}
               </p>
@@ -919,23 +917,6 @@ function ProfileAuthenticatedContent({
             )}
           </div>
     </>
-  );
-}
-
-/** Re-run the server page when the client session exists but SSR had no session. */
-function ProfileClientRefresh() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.refresh();
-  }, [router]);
-
-  return (
-    <div className={`${ui.page} ${inter.className}`}>
-      <div className={ui.container}>
-        <LoadingSpinner label="Loading your profile…" />
-      </div>
-    </div>
   );
 }
 

@@ -1,4 +1,4 @@
-# Group 3 — Movies & TV
+# Group 3 — MintMovies
 
 Frontend for the TCSS 460 Movie and TV Review Platform. Browse popular titles, search movies and TV shows, view details with community ratings, and sign in with the course OIDC provider to access your profile.
 

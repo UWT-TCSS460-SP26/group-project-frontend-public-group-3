@@ -89,7 +89,7 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
       <p className="mb-2 text-xs font-medium text-brand">
         {review.author.username}
       </p>
-      <p className="text-sm leading-relaxed text-slate-700">{review.body}</p>
+      <p className="text-sm leading-relaxed text-prose">{review.body}</p>
     </article>
   );
 }
@@ -291,7 +291,7 @@ function DetailContent({
         >
           Synopsis
         </h2>
-        <p className="text-sm leading-relaxed text-muted">
+        <p className="text-sm leading-relaxed text-prose">
           {detail.overview?.trim() || "No synopsis available."}
         </p>
       </section>

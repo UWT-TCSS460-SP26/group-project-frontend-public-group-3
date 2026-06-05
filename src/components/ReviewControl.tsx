@@ -103,7 +103,7 @@ export default function ReviewControl({
 
   if (!isSignedIn) {
     return (
-      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <button
           type="button"
           onClick={() => signIn(AUTH_PROVIDER_ID, { callbackUrl: signInCallbackUrl })}
@@ -120,7 +120,7 @@ export default function ReviewControl({
 
   if (!review && !isEditing) {
     return (
-      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <button
           type="button"
           onClick={() => setIsEditing(true)}
@@ -134,7 +134,7 @@ export default function ReviewControl({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       {!isEditing && review ? (
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
@@ -162,7 +162,7 @@ export default function ReviewControl({
               {review.title}
             </p>
           )}
-          <p className="mt-1 text-sm leading-relaxed text-slate-700">{review.body}</p>
+          <p className="mt-1 text-sm leading-relaxed text-prose">{review.body}</p>
           <p className="mt-3 text-xs text-muted">
             Created {formatDisplayDateTime(review.createdAt)} · Updated{" "}
             {formatDisplayDateTime(review.updatedAt)}
@@ -179,7 +179,7 @@ export default function ReviewControl({
             onChange={(e) => setTitle(e.target.value)}
             maxLength={120}
             placeholder="Optional title"
-            className="mb-2 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-brand outline-none focus:border-brand"
+            className="mb-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-brand outline-none focus:border-brand"
           />
           <textarea
             value={body}
@@ -188,9 +188,9 @@ export default function ReviewControl({
             minLength={10}
             maxLength={5000}
             placeholder="Share your thoughts (10+ characters)"
-            className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-brand outline-none focus:border-brand"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-brand outline-none focus:border-brand"
           />
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
               className="rounded-md border border-border bg-mint px-3 py-2 text-sm font-semibold text-brand transition-colors hover:bg-mint/80 disabled:opacity-60"
@@ -201,12 +201,13 @@ export default function ReviewControl({
             </button>
             <button
               type="button"
-              className="rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-mint-soft"
+              className="rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-mint-soft"
               onClick={cancelEdit}
               disabled={isPending}
             >
               Cancel
             </button>
+            <p className="text-xs text-muted">Review must be at least 10+ characters.</p>
           </div>
         </div>
       )}

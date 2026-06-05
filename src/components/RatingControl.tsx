@@ -19,6 +19,36 @@ type StoredUserRating = {
   score: number;
 };
 
+function readStoredRating(storageKey: string): StoredUserRating | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(storageKey);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as StoredUserRating;
+    if (
+      Number.isInteger(parsed.score) &&
+      parsed.score >= 1 &&
+      parsed.score <= STAR_COUNT
+    ) {
+      return {
+        score: parsed.score,
+        id:
+          parsed.id != null && Number.isInteger(parsed.id) ? parsed.id : null,
+      };
+    }
+  } catch {
+    // Ignore malformed local data.
+  }
+
+  return null;
+}
+
 type RatingControlProps = {
   tmdbId: number;
   mediaType: MediaType;
@@ -53,49 +83,33 @@ export default function RatingControl({
   initialRating,
 }: RatingControlProps) {
   const router = useRouter();
+  const storageKey = `rating:${mediaType}:${tmdbId}`;
   const [isPending, startTransition] = useTransition();
-  const [score, setScore] = useState(initialRating?.score ?? 0);
-  const [ratingId, setRatingId] = useState<number | null>(
-    initialRating?.id ?? null,
-  );
+  const [score, setScore] = useState(() => {
+    if (initialRating) {
+      return initialRating.score;
+    }
+    return readStoredRating(storageKey)?.score ?? 0;
+  });
+  const [ratingId, setRatingId] = useState<number | null>(() => {
+    if (initialRating) {
+      return initialRating.id;
+    }
+    return readStoredRating(storageKey)?.id ?? null;
+  });
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const storageKey = `rating:${mediaType}:${tmdbId}`;
 
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!isSignedIn || !initialRating) {
       return;
     }
 
-    if (initialRating) {
-      const current: StoredUserRating = {
-        id: initialRating.id,
-        score: initialRating.score,
-      };
-      window.localStorage.setItem(storageKey, JSON.stringify(current));
-      return;
-    }
-
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) {
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as StoredUserRating;
-      if (
-        Number.isInteger(parsed.score) &&
-        parsed.score >= 1 &&
-        parsed.score <= STAR_COUNT
-      ) {
-        setScore(parsed.score);
-        setRatingId(
-          parsed.id != null && Number.isInteger(parsed.id) ? parsed.id : null,
-        );
-      }
-    } catch {
-      // Ignore malformed local data.
-    }
+    const current: StoredUserRating = {
+      id: initialRating.id,
+      score: initialRating.score,
+    };
+    window.localStorage.setItem(storageKey, JSON.stringify(current));
   }, [initialRating, isSignedIn, storageKey]);
 
   if (!isSignedIn) {
