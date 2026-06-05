@@ -1,5 +1,10 @@
 import { Inter, Montserrat } from "next/font/google";
-import { searchMovies, searchTvShows } from "@/lib/api";
+import {
+  getMovieDetail,
+  getShowDetail,
+  searchMovies,
+  searchTvShows,
+} from "@/lib/api";
 import type { MediaListItem, MediaType } from "@/lib/types";
 import MediaResultCard from "@/src/components/MediaResultCard";
 import PaginationNav from "@/src/components/PaginationNav";
@@ -18,9 +23,15 @@ const montserrat = Montserrat({
 });
 
 type SearchMediaType = Extract<MediaType, "movie" | "show">;
+type SearchSort = "relevance" | "rating_desc" | "rating_asc";
 
 type SearchPageProps = {
-  searchParams: Promise<{ type?: string; title?: string; page?: string }>;
+  searchParams: Promise<{
+    type?: string;
+    title?: string;
+    page?: string;
+    sort?: string;
+  }>;
 };
 
 function parseMediaType(value: string | undefined): SearchMediaType {
@@ -31,20 +42,53 @@ function buildSearchHref(
   type: SearchMediaType,
   title: string,
   page: number,
+  sort: SearchSort,
 ): string {
   const params = new URLSearchParams({
     type,
     title,
     page: String(page),
+    sort,
   });
   return `/search?${params.toString()}`;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+function parseSort(value: string | undefined): SearchSort {
+  if (value === "rating_desc" || value === "rating_asc") {
+    return value;
+  }
+  return "relevance";
+}
+
+function sortResultsByRating(
+  items: MediaListItem[],
+  ratings: Map<number, number | null>,
+  sort: Exclude<SearchSort, "relevance">,
+): MediaListItem[] {
+  return [...items].sort((a, b) => {
+    const aRating = ratings.get(a.id) ?? -1;
+    const bRating = ratings.get(b.id) ?? -1;
+
+    if (aRating === bRating) {
+      return 0;
+    }
+
+    if (sort === "rating_asc") {
+      return aRating - bRating;
+    }
+
+    return bRating - aRating;
+  });
+}
+
+export default async function SearchPage({
+  searchParams,
+}: Readonly<SearchPageProps>) {
   const params = await searchParams;
   const mediaType = parseMediaType(params.type);
   const title = params.title?.trim() ?? "";
   const page = parsePageParam(params.page);
+  const sort = parseSort(params.sort);
   const hasQuery = title.length > 0;
 
   const isMovie = mediaType === "movie";
@@ -66,6 +110,24 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       totalResults = data.totalResults;
       totalPages = data.totalPages;
       currentPage = data.page;
+
+      if (sort !== "relevance" && results.length > 1) {
+        const ratingPairs = await Promise.all(
+          results.map(async (item) => {
+            try {
+              const detail = isMovie
+                ? await getMovieDetail(item.id)
+                : await getShowDetail(item.id);
+              return [item.id, detail.rating] as const;
+            } catch {
+              return [item.id, null] as const;
+            }
+          }),
+        );
+
+        const ratings = new Map<number, number | null>(ratingPairs);
+        results = sortResultsByRating(results, ratings, sort);
+      }
     } catch (err) {
       errorMessage =
         err instanceof Error
@@ -109,25 +171,48 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {hasQuery && !errorMessage && results.length > 0 && (
           <section>
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-              <p className="text-sm text-muted">
-                <span className="font-semibold text-brand">{totalResults}</span>{" "}
-                {mediaLabel}
-                {totalResults === 1 ? "" : "s"} for &ldquo;{title}&rdquo;
-              </p>
-              {totalPages > 1 && (
+              <div>
                 <p className="text-sm text-muted">
-                  Page {currentPage} of {totalPages}
+                  <span className="font-semibold text-brand">{totalResults}</span>{" "}
+                  {mediaLabel}
+                  {totalResults === 1 ? "" : "s"} for &ldquo;{title}&rdquo;
                 </p>
-              )}
+                {totalPages > 1 && (
+                  <p className="text-sm text-muted">
+                    Page {currentPage} of {totalPages}
+                  </p>
+                )}
+              </div>
+
+              <form action="/search" method="get" className="flex items-center gap-2">
+                <input type="hidden" name="type" value={mediaType} />
+                <input type="hidden" name="title" value={title} />
+                <label htmlFor="search-sort" className={ui.label}>
+                  Sort
+                </label>
+                <select
+                  id="search-sort"
+                  name="sort"
+                  defaultValue={sort}
+                  className={ui.select}
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="rating_desc">TMDB Rating: High to Low</option>
+                  <option value="rating_asc">TMDB Rating: Low to High</option>
+                </select>
+                <button type="submit" className={ui.pillSecondary}>
+                  Apply
+                </button>
+              </form>
             </div>
 
             <PaginationNav
               currentPage={currentPage}
               totalPages={totalPages}
-              buildHref={(p) => buildSearchHref(mediaType, title, p)}
+              buildHref={(p) => buildSearchHref(mediaType, title, p, sort)}
               ariaLabel="Search results pagination (top)"
               formAction="/search"
-              formFields={{ type: mediaType, title }}
+              formFields={{ type: mediaType, title, sort }}
               placement="top"
             />
 
@@ -142,10 +227,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <PaginationNav
               currentPage={currentPage}
               totalPages={totalPages}
-              buildHref={(p) => buildSearchHref(mediaType, title, p)}
+              buildHref={(p) => buildSearchHref(mediaType, title, p, sort)}
               ariaLabel="Search results pagination (bottom)"
               formAction="/search"
-              formFields={{ type: mediaType, title }}
+              formFields={{ type: mediaType, title, sort }}
               placement="bottom"
             />
           </section>
