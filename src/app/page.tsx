@@ -33,7 +33,12 @@ const montserrat = Montserrat({
 });
 
 type BrowseMediaType = Extract<MediaType, "movie" | "show">;
-type BrowseSort = "popular" | "rating_desc" | "rating_asc";
+type BrowseSort =
+  | "popular"
+  | "rating_desc"
+  | "rating_asc"
+  | "review_desc"
+  | "review_asc";
 
 type HomePageProps = {
   searchParams: Promise<{ type?: string; page?: string; sort?: string }>;
@@ -53,31 +58,100 @@ function buildPageHref(type: BrowseMediaType, page: number, sort: BrowseSort): s
 }
 
 function parseSort(value: string | undefined): BrowseSort {
-  if (value === "rating_desc" || value === "rating_asc") {
+  if (
+    value === "rating_desc" ||
+    value === "rating_asc" ||
+    value === "review_desc" ||
+    value === "review_asc"
+  ) {
     return value;
   }
   return "popular";
 }
 
-function sortResultsByRating(
+function sortResultsByMetric(
   items: MediaListItem[],
-  ratings: Map<number, number | null>,
+  metrics: Map<number, number | null>,
   sort: Exclude<BrowseSort, "popular">,
 ): MediaListItem[] {
   return [...items].sort((a, b) => {
-    const aRating = ratings.get(a.id) ?? -1;
-    const bRating = ratings.get(b.id) ?? -1;
+    const aMetric = metrics.get(a.id) ?? -1;
+    const bMetric = metrics.get(b.id) ?? -1;
 
-    if (aRating === bRating) {
+    if (aMetric === bMetric) {
       return 0;
     }
 
-    if (sort === "rating_asc") {
-      return aRating - bRating;
+    if (sort === "rating_asc" || sort === "review_asc") {
+      return aMetric - bMetric;
     }
 
-    return bRating - aRating;
+    return bMetric - aMetric;
   });
+}
+
+type DetailMetrics = {
+  rating: number | null;
+  reviewCount: number | null;
+};
+
+async function fetchDetailMetrics(
+  items: MediaListItem[],
+  isMovie: boolean,
+): Promise<Map<number, DetailMetrics>> {
+  const detailPairs = await Promise.all(
+    items.map(async (item) => {
+      try {
+        const detail = isMovie
+          ? await getMovieDetail(item.id)
+          : await getShowDetail(item.id);
+        return [
+          item.id,
+          {
+            rating: detail.rating,
+            reviewCount: detail.community.reviewCount,
+          },
+        ] as const;
+      } catch {
+        return [item.id, { rating: null, reviewCount: null }] as const;
+      }
+    }),
+  );
+
+  return new Map<number, DetailMetrics>(detailPairs);
+}
+
+function buildMetricMap(
+  items: MediaListItem[],
+  details: Map<number, DetailMetrics>,
+  sort: Exclude<BrowseSort, "popular">,
+): Map<number, number | null> {
+  const metricMap = new Map<number, number | null>();
+
+  for (const item of items) {
+    const detail = details.get(item.id);
+    if (sort === "rating_desc" || sort === "rating_asc") {
+      metricMap.set(item.id, detail?.rating ?? null);
+    } else {
+      metricMap.set(item.id, detail?.reviewCount ?? null);
+    }
+  }
+
+  return metricMap;
+}
+
+async function applyBrowseSort(
+  items: MediaListItem[],
+  isMovie: boolean,
+  sort: BrowseSort,
+): Promise<MediaListItem[]> {
+  if (sort === "popular" || items.length < 2) {
+    return items;
+  }
+
+  const details = await fetchDetailMetrics(items, isMovie);
+  const metricMap = buildMetricMap(items, details, sort);
+  return sortResultsByMetric(items, metricMap, sort);
 }
 
 export default async function HomePage({ searchParams }: Readonly<HomePageProps>) {
@@ -115,23 +189,7 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
       results.length,
     );
 
-    if (sort !== "popular" && results.length > 1) {
-      const ratingPairs = await Promise.all(
-        results.map(async (item) => {
-          try {
-            const detail = isMovie
-              ? await getMovieDetail(item.id)
-              : await getShowDetail(item.id);
-            return [item.id, detail.rating] as const;
-          } catch {
-            return [item.id, null] as const;
-          }
-        }),
-      );
-
-      const ratings = new Map<number, number | null>(ratingPairs);
-      results = sortResultsByRating(results, ratings, sort);
-    }
+    results = await applyBrowseSort(results, isMovie, sort);
   } catch (err) {
     errorMessage =
       err instanceof Error
@@ -203,6 +261,8 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
                   <option value="popular">Popular (TMDB)</option>
                   <option value="rating_desc">TMDB Rating: High to Low</option>
                   <option value="rating_asc">TMDB Rating: Low to High</option>
+                  <option value="review_desc">Community Reviews: High to Low</option>
+                  <option value="review_asc">Community Reviews: Low to High</option>
                 </select>
                 <button type="submit" className={ui.pillSecondary}>
                   Apply

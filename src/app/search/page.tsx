@@ -23,7 +23,12 @@ const montserrat = Montserrat({
 });
 
 type SearchMediaType = Extract<MediaType, "movie" | "show">;
-type SearchSort = "relevance" | "rating_desc" | "rating_asc";
+type SearchSort =
+  | "relevance"
+  | "rating_desc"
+  | "rating_asc"
+  | "review_desc"
+  | "review_asc";
 
 type SearchPageProps = {
   searchParams: Promise<{
@@ -54,31 +59,100 @@ function buildSearchHref(
 }
 
 function parseSort(value: string | undefined): SearchSort {
-  if (value === "rating_desc" || value === "rating_asc") {
+  if (
+    value === "rating_desc" ||
+    value === "rating_asc" ||
+    value === "review_desc" ||
+    value === "review_asc"
+  ) {
     return value;
   }
   return "relevance";
 }
 
-function sortResultsByRating(
+function sortResultsByMetric(
   items: MediaListItem[],
-  ratings: Map<number, number | null>,
+  metrics: Map<number, number | null>,
   sort: Exclude<SearchSort, "relevance">,
 ): MediaListItem[] {
   return [...items].sort((a, b) => {
-    const aRating = ratings.get(a.id) ?? -1;
-    const bRating = ratings.get(b.id) ?? -1;
+    const aMetric = metrics.get(a.id) ?? -1;
+    const bMetric = metrics.get(b.id) ?? -1;
 
-    if (aRating === bRating) {
+    if (aMetric === bMetric) {
       return 0;
     }
 
-    if (sort === "rating_asc") {
-      return aRating - bRating;
+    if (sort === "rating_asc" || sort === "review_asc") {
+      return aMetric - bMetric;
     }
 
-    return bRating - aRating;
+    return bMetric - aMetric;
   });
+}
+
+type DetailMetrics = {
+  rating: number | null;
+  reviewCount: number | null;
+};
+
+async function fetchDetailMetrics(
+  items: MediaListItem[],
+  isMovie: boolean,
+): Promise<Map<number, DetailMetrics>> {
+  const detailPairs = await Promise.all(
+    items.map(async (item) => {
+      try {
+        const detail = isMovie
+          ? await getMovieDetail(item.id)
+          : await getShowDetail(item.id);
+        return [
+          item.id,
+          {
+            rating: detail.rating,
+            reviewCount: detail.community.reviewCount,
+          },
+        ] as const;
+      } catch {
+        return [item.id, { rating: null, reviewCount: null }] as const;
+      }
+    }),
+  );
+
+  return new Map<number, DetailMetrics>(detailPairs);
+}
+
+function buildMetricMap(
+  items: MediaListItem[],
+  details: Map<number, DetailMetrics>,
+  sort: Exclude<SearchSort, "relevance">,
+): Map<number, number | null> {
+  const metricMap = new Map<number, number | null>();
+
+  for (const item of items) {
+    const detail = details.get(item.id);
+    if (sort === "rating_desc" || sort === "rating_asc") {
+      metricMap.set(item.id, detail?.rating ?? null);
+    } else {
+      metricMap.set(item.id, detail?.reviewCount ?? null);
+    }
+  }
+
+  return metricMap;
+}
+
+async function applySearchSort(
+  items: MediaListItem[],
+  isMovie: boolean,
+  sort: SearchSort,
+): Promise<MediaListItem[]> {
+  if (sort === "relevance" || items.length < 2) {
+    return items;
+  }
+
+  const details = await fetchDetailMetrics(items, isMovie);
+  const metricMap = buildMetricMap(items, details, sort);
+  return sortResultsByMetric(items, metricMap, sort);
 }
 
 export default async function SearchPage({
@@ -111,23 +185,7 @@ export default async function SearchPage({
       totalPages = data.totalPages;
       currentPage = data.page;
 
-      if (sort !== "relevance" && results.length > 1) {
-        const ratingPairs = await Promise.all(
-          results.map(async (item) => {
-            try {
-              const detail = isMovie
-                ? await getMovieDetail(item.id)
-                : await getShowDetail(item.id);
-              return [item.id, detail.rating] as const;
-            } catch {
-              return [item.id, null] as const;
-            }
-          }),
-        );
-
-        const ratings = new Map<number, number | null>(ratingPairs);
-        results = sortResultsByRating(results, ratings, sort);
-      }
+      results = await applySearchSort(results, isMovie, sort);
     } catch (err) {
       errorMessage =
         err instanceof Error
@@ -199,6 +257,8 @@ export default async function SearchPage({
                   <option value="relevance">Relevance</option>
                   <option value="rating_desc">TMDB Rating: High to Low</option>
                   <option value="rating_asc">TMDB Rating: Low to High</option>
+                  <option value="review_desc">Community Reviews: High to Low</option>
+                  <option value="review_asc">Community Reviews: Low to High</option>
                 </select>
                 <button type="submit" className={ui.pillSecondary}>
                   Apply
