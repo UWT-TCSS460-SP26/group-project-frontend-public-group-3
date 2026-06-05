@@ -1,6 +1,6 @@
 import { Inter, Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
-import { ApiRequestError, getMovieDetail, getShowDetail } from "@/lib/api";
+import { ApiRequestError, getMovieDetail, getShowDetail, getPopularMovies, getPopularTvShows } from "@/lib/api";
 import { getMyRatingForTitle } from "@/lib/ratings-server";
 import { getMyReviewForTitle } from "@/lib/reviews-server";
 import type {
@@ -61,14 +61,20 @@ function formatRuntime(minutes: number | null): string {
 }
 
 function formatYear(year: number | null): string {
-  return year != null ? String(year) : "—";
+  if (year == null) {
+    return "—";
+  }
+  return String(year);
 }
 
 function formatScore(score: number | null): string {
-  return score != null ? score.toFixed(1) : "—";
+  if (score == null) {
+    return "—";
+  }
+  return score.toFixed(1);
 }
 
-function ReviewCard({ review }: { review: ReviewResponse }) {
+function ReviewCard({ review }: Readonly<{ review: ReviewResponse }>) {
   const heading = review.title?.trim() || "Review";
 
   return (
@@ -94,7 +100,7 @@ function ReviewCard({ review }: { review: ReviewResponse }) {
   );
 }
 
-function CommunitySection({ community }: { community: CommunitySummary }) {
+function CommunitySection({ community }: Readonly<{ community: CommunitySummary }>) {
   const hasRatings = community.ratingCount > 0;
   const hasReviews = community.recentReviews.length > 0;
 
@@ -176,14 +182,14 @@ function DetailContent({
   signInCallbackUrl,
   userRating,
   userReview,
-}: {
+}: Readonly<{
   detail: MediaDetailResponse;
   mediaType: DetailMediaType;
   isSignedIn: boolean;
   signInCallbackUrl: string;
   userRating: UserRatingState | null;
   userReview: UserReviewState | null;
-}) {
+}>) {
   const isMovie = isMovieDetail(detail);
   const mediaLabel = isMovie ? "movie" : "TV show";
 
@@ -301,7 +307,51 @@ function DetailContent({
   );
 }
 
-export default async function DetailsPage({ searchParams }: DetailsPageProps) {
+async function fetchRecommendations(
+  detail: MediaDetailResponse,
+  isMovie: boolean,
+  limit = 6,
+) {
+  try {
+    const data = isMovie ? await getPopularMovies(1) : await getPopularTvShows(1);
+    const recs = data.results.filter((r) => r.id !== detail.id).slice(0, limit);
+    return recs;
+  } catch {
+    return [];
+  }
+}
+
+function RecommendationSection({ items }: Readonly<{ items: { id: number; title: string; posterUrl: string | null; mediaType: string }[] }>) {
+  if (!items || items.length === 0) {
+    return null;
+  }
+  return (
+    <section className={`mb-8 ${ui.card}`}>
+      <h2 className={`mb-3 text-lg font-semibold text-brand ${montserrat.className}`}>
+        You might also like
+      </h2>
+      <ul className="grid gap-5 sm:grid-cols-3">
+        {items.map((it) => (
+          <li key={`${it.mediaType}-${it.id}`} className="transform transition hover:scale-105 duration-200">
+            <a href={`/details?type=${it.mediaType}&id=${it.id}`} className="block">
+              <div className="h-40 w-full overflow-hidden rounded-md bg-mint-soft">
+                {it.posterUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={it.posterUrl} alt={`${it.title} poster`} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm text-muted">No poster</div>
+                )}
+              </div>
+              <p className="mt-2 text-sm font-medium text-prose">{it.title}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export default async function DetailsPage({ searchParams }: Readonly<DetailsPageProps>) {
   const params = await searchParams;
   const mediaType = parseMediaType(params.type);
   const id = parseId(params.id);
@@ -355,14 +405,15 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
         : "We could not load this title. Please try again.";
   }
 
-  if (isSignedIn && detail) {
+  async function fetchUserContent() {
+    if (!isSignedIn || !detail) return;
     try {
       const existing = await getMyRatingForTitle(id, mediaType);
       if (existing) {
         userRating = { id: existing.id, score: existing.score };
       }
     } catch {
-      // Rating lookup is optional; detail page still renders.
+      // optional
     }
     try {
       const existingReview = await getMyReviewForTitle(id, mediaType);
@@ -376,11 +427,19 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
         };
       }
     } catch {
-      // Review lookup is optional; detail page still renders.
+      // optional
     }
   }
 
-  return (
+  await fetchUserContent();
+
+    let recommendations: { id: number; title: string; posterUrl: string | null; mediaType: string }[] = [];
+    if (detail) {
+      const recs = await fetchRecommendations(detail, mediaType === "movie");
+      recommendations = recs.map((r) => ({ id: r.id, title: r.title, posterUrl: r.posterUrl, mediaType: r.mediaType }));
+    }
+
+    return (
     <div
       className={`${ui.page} ${inter.className}`}
     >
@@ -411,14 +470,17 @@ export default async function DetailsPage({ searchParams }: DetailsPageProps) {
         )}
 
         {detail && (
-          <DetailContent
-            detail={detail}
-            mediaType={mediaType}
-            isSignedIn={isSignedIn}
-            signInCallbackUrl={signInCallbackUrl}
-            userRating={userRating}
-            userReview={userReview}
-          />
+          <>
+            <DetailContent
+              detail={detail}
+              mediaType={mediaType}
+              isSignedIn={isSignedIn}
+              signInCallbackUrl={signInCallbackUrl}
+              userRating={userRating}
+              userReview={userReview}
+            />
+            <RecommendationSection items={recommendations} />
+          </>
         )}
       </div>
     </div>

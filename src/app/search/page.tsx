@@ -7,6 +7,7 @@ import {
 } from "@/lib/api";
 import type { MediaListItem, MediaType } from "@/lib/types";
 import MediaResultCard from "@/src/components/MediaResultCard";
+import SortControl from "@/src/components/SortControl";
 import PaginationNav from "@/src/components/PaginationNav";
 import { parsePageParam } from "@/src/lib/pagination";
 import { ui } from "@/src/lib/ui";
@@ -223,6 +224,14 @@ export default async function SearchPage({
               Nothing matched &ldquo;{title}&rdquo; in {mediaLabelPlural}. Try
               another title or switch the type in the search bar.
             </p>
+            <div className="mt-4 flex gap-2">
+              <a href={`/?type=${mediaType}`} className={ui.pillSecondary}>
+                Browse popular {mediaType === "movie" ? "movies" : "TV shows"}
+              </a>
+              <a href="/search" className={ui.pillSecondary}>
+                Clear search
+              </a>
+            </div>
           </section>
         )}
 
@@ -242,28 +251,22 @@ export default async function SearchPage({
                 )}
               </div>
 
-              <form action="/search" method="get" className="flex items-center gap-2">
-                <input type="hidden" name="type" value={mediaType} />
-                <input type="hidden" name="title" value={title} />
-                <label htmlFor="search-sort" className={ui.label}>
-                  Sort
-                </label>
-                <select
-                  id="search-sort"
-                  name="sort"
-                  defaultValue={sort}
-                  className={ui.select}
-                >
-                  <option value="relevance">Relevance</option>
-                  <option value="rating_desc">TMDB Rating: High to Low</option>
-                  <option value="rating_asc">TMDB Rating: Low to High</option>
-                  <option value="review_desc">Community Reviews: High to Low</option>
-                  <option value="review_asc">Community Reviews: Low to High</option>
-                </select>
-                <button type="submit" className={ui.pillSecondary}>
-                  Apply
-                </button>
-              </form>
+              {/* Sort control (client) - auto-applies on change */}
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore Server component rendering client component */}
+              <SortControl
+                action="/search"
+                selectId="search-sort"
+                currentSort={sort}
+                options={[
+                  { value: "relevance", label: "Relevance" },
+                  { value: "rating_desc", label: "TMDB Rating: High to Low" },
+                  { value: "rating_asc", label: "TMDB Rating: Low to High" },
+                  { value: "review_desc", label: "Community Reviews: High to Low" },
+                  { value: "review_asc", label: "Community Reviews: Low to High" },
+                ]}
+                hiddenFields={{ type: mediaType, title }}
+              />
               <p className="text-xs text-muted mt-1">
                 Sorting by TMDB Rating or Community Reviews only reorders results on this page.
               </p>
@@ -281,7 +284,7 @@ export default async function SearchPage({
 
             <ul className="grid gap-5">
               {results.map((item) => (
-                <li key={`${item.mediaType}-${item.id}`}>
+                <li key={`${item.mediaType}-${item.id}`} className="transform transition hover:scale-105 duration-200">
                   <MediaResultCard item={item} />
                 </li>
               ))}

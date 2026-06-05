@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import type { MediaListItem, MediaType } from "@/lib/types";
 import MediaResultCard from "@/src/components/MediaResultCard";
+import SortControl from "@/src/components/SortControl";
 import PaginationNav from "@/src/components/PaginationNav";
 import PopularBrowseTabs from "@/src/components/PopularBrowseTabs";
 import {
@@ -234,6 +235,11 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
             <p className="mt-2 text-sm text-muted">
               Try again later or search for a title using the bar above.
             </p>
+            <div className="mt-4">
+              <a href="/search" className={ui.pillSecondary}>
+                Search titles
+              </a>
+            </div>
           </section>
         )}
 
@@ -252,22 +258,22 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
                 )}
               </div>
 
-              <form action="/" method="get" className="flex items-center gap-2">
-                <input type="hidden" name="type" value={mediaType} />
-                <label htmlFor="home-sort" className={ui.label}>
-                  Sort
-                </label>
-                <select id="home-sort" name="sort" defaultValue={sort} className={ui.select}>
-                  <option value="popular">Popular (TMDB)</option>
-                  <option value="rating_desc">TMDB Rating: High to Low</option>
-                  <option value="rating_asc">TMDB Rating: Low to High</option>
-                  <option value="review_desc">Community Reviews: High to Low</option>
-                  <option value="review_asc">Community Reviews: Low to High</option>
-                </select>
-                <button type="submit" className={ui.pillSecondary}>
-                  Apply
-                </button>
-              </form>
+              {/* Sort control (client) - auto-applies on change */}
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore Server component rendering client component */}
+              <SortControl
+                action="/"
+                selectId="home-sort"
+                currentSort={sort}
+                options={[
+                  { value: "popular", label: "Popular (TMDB)" },
+                  { value: "rating_desc", label: "TMDB Rating: High to Low" },
+                  { value: "rating_asc", label: "TMDB Rating: Low to High" },
+                  { value: "review_desc", label: "Community Reviews: High to Low" },
+                  { value: "review_asc", label: "Community Reviews: Low to High" },
+                ]}
+                hiddenFields={{ type: mediaType }}
+              />
                 <p className="text-xs text-muted mt-1">
                   Sorting by TMDB Rating or Community Reviews only reorders results on this page.
                 </p>
@@ -285,7 +291,7 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
 
             <ul className="grid gap-5">
               {results.map((item) => (
-                <li key={`${item.mediaType}-${item.id}`}>
+                <li key={`${item.mediaType}-${item.id}`} className="transform transition hover:scale-105 duration-200">
                   <MediaResultCard item={item} />
                 </li>
               ))}
