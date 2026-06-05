@@ -20,11 +20,11 @@ type StoredUserRating = {
 };
 
 function readStoredRating(storageKey: string): StoredUserRating | null {
-  if (typeof window === "undefined") {
+  if (globalThis == null || (globalThis as any).localStorage == null) {
     return null;
   }
 
-  const raw = window.localStorage.getItem(storageKey);
+  const raw = (globalThis as any).localStorage.getItem(storageKey);
   if (!raw) {
     return null;
   }
@@ -57,7 +57,7 @@ type RatingControlProps = {
   initialRating: UserRating | null;
 };
 
-function StarIcon({ filled }: { filled: boolean }) {
+function StarIcon({ filled }: Readonly<{ filled: boolean }>) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -81,7 +81,7 @@ export default function RatingControl({
   isSignedIn,
   signInCallbackUrl,
   initialRating,
-}: RatingControlProps) {
+}: Readonly<RatingControlProps>) {
   const router = useRouter();
   const storageKey = `rating:${mediaType}:${tmdbId}`;
   const [isPending, startTransition] = useTransition();
@@ -109,7 +109,7 @@ export default function RatingControl({
       id: initialRating.id,
       score: initialRating.score,
     };
-    window.localStorage.setItem(storageKey, JSON.stringify(current));
+    globalThis.localStorage.setItem(storageKey, JSON.stringify(current));
   }, [initialRating, isSignedIn, storageKey]);
 
   if (!isSignedIn) {
@@ -151,7 +151,7 @@ export default function RatingControl({
         id: result.rating.id,
         score: result.rating.score,
       };
-      window.localStorage.setItem(storageKey, JSON.stringify(saved));
+      globalThis.localStorage.setItem(storageKey, JSON.stringify(saved));
       setSavedMessage(
         ratingId == null ? "Rating saved." : "Rating updated.",
       );
@@ -162,7 +162,7 @@ export default function RatingControl({
   function handleDelete() {
     if (ratingId == null) {
       setScore(0);
-      window.localStorage.removeItem(storageKey);
+      globalThis.localStorage.removeItem(storageKey);
       setSavedMessage("Rating cleared.");
       return;
     }
@@ -176,7 +176,7 @@ export default function RatingControl({
       }
       setRatingId(null);
       setScore(0);
-      window.localStorage.removeItem(storageKey);
+      globalThis.localStorage.removeItem(storageKey);
       setSavedMessage("Rating deleted.");
       router.refresh();
     });
@@ -210,11 +210,8 @@ export default function RatingControl({
         </p>
       )}
 
-      <div
-        className="flex flex-wrap gap-0.5"
-        role="group"
-        aria-label={`Your rating from 1 to ${STAR_COUNT}`}
-      >
+      <fieldset className="flex flex-wrap gap-0.5" aria-label={`Your rating from 1 to ${STAR_COUNT}`}>
+        <legend className="sr-only">Your rating</legend>
         {Array.from({ length: STAR_COUNT }, (_, index) => {
           const starValue = index + 1;
           const filled = starValue <= score;
@@ -225,7 +222,7 @@ export default function RatingControl({
               type="button"
               disabled={isPending}
               onClick={() => handleSelect(starValue)}
-              className="rounded-md p-0.5 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-mint/60 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md p-0.5 transition-transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-mint/60 disabled:cursor-not-allowed disabled:opacity-60"
               aria-label={`${starValue} out of ${STAR_COUNT}`}
               aria-pressed={filled}
             >
@@ -233,17 +230,13 @@ export default function RatingControl({
             </button>
           );
         })}
-      </div>
+      </fieldset>
 
       {isPending && (
-        <p className="mt-2 text-xs text-muted" role="status">
-          Saving…
-        </p>
+        <output className="mt-2 text-xs text-muted">Saving…</output>
       )}
       {savedMessage && !isPending && (
-        <p className="mt-2 text-xs font-medium text-brand" role="status">
-          {savedMessage}
-        </p>
+        <output className="mt-2 text-xs font-medium text-brand">{savedMessage}</output>
       )}
       {error && (
         <p className="mt-2 text-xs text-red-700" role="alert">

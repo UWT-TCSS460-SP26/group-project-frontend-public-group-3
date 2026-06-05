@@ -19,11 +19,11 @@ export const ui = {
   cardInteractive:
     "block w-full rounded-3xl border border-border bg-mint/90 p-5 shadow-sm transition-all hover:border-brand/20 hover:bg-mint hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/60",
   pillPrimary:
-    "rounded-full bg-brand-bg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-bg-hover focus:outline-none focus:ring-2 focus:ring-mint focus:ring-offset-2",
+    "rounded-full bg-brand-bg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-bg-hover focus:outline-none focus:ring-2 focus:ring-mint focus:ring-offset-2 active:scale-95",
   pillSecondary:
-    "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft",
+    "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft active:scale-95",
   pillMint:
-    "rounded-full bg-mint px-5 py-2.5 text-sm font-semibold text-brand shadow-sm transition-colors hover:bg-mint/80",
+    "rounded-full bg-mint px-5 py-2.5 text-sm font-semibold text-brand shadow-sm transition-colors hover:bg-mint/80 active:scale-95",
   navLink:
     "rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-mint-soft hover:text-brand",
   badge: "rounded-full bg-mint px-3 py-1 text-xs font-semibold capitalize text-brand",

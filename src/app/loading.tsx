@@ -1,6 +1,7 @@
 import { Inter, Montserrat } from "next/font/google";
 
 import LoadingSpinner from "@/src/components/LoadingSpinner";
+import SkeletonGrid from "@/src/components/SkeletonGrid";
 import { ui } from "@/src/lib/ui";
 
 const inter = Inter({
@@ -25,6 +26,7 @@ export default function HomeLoading() {
           </h1>
         </header>
         <LoadingSpinner label="Fetching popular titles" />
+        <SkeletonGrid />
       </div>
     </div>
   );
