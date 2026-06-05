@@ -268,6 +268,9 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
                   Apply
                 </button>
               </form>
+                <p className="text-xs text-muted mt-1">
+                  Sorting by TMDB Rating or Community Reviews only reorders results on this page.
+                </p>
             </div>
 
             <PaginationNav
