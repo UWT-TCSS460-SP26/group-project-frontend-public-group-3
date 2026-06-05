@@ -381,9 +381,11 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
     );
   }
 
+  const validId = id;
+
   const session = await auth();
   const isSignedIn = Boolean(session?.accessToken);
-  const signInCallbackUrl = `/details?type=${mediaType}&id=${id}`;
+  const signInCallbackUrl = `/details?type=${mediaType}&id=${validId}`;
 
   let detail: MediaDetailResponse | null = null;
   let errorMessage: string | null = null;
@@ -393,8 +395,8 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
   try {
     detail =
       mediaType === "movie"
-        ? await getMovieDetail(id)
-        : await getShowDetail(id);
+        ? await getMovieDetail(validId)
+        : await getShowDetail(validId);
   } catch (err) {
     if (err instanceof ApiRequestError && err.status === 404) {
       notFound();
@@ -408,7 +410,7 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
   async function fetchUserContent() {
     if (!isSignedIn || !detail) return;
     try {
-      const existing = await getMyRatingForTitle(id, mediaType);
+      const existing = await getMyRatingForTitle(validId, mediaType);
       if (existing) {
         userRating = { id: existing.id, score: existing.score };
       }
@@ -416,7 +418,7 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
       // optional
     }
     try {
-      const existingReview = await getMyReviewForTitle(id, mediaType);
+      const existingReview = await getMyReviewForTitle(validId, mediaType);
       if (existingReview) {
         userReview = {
           id: existingReview.id,
