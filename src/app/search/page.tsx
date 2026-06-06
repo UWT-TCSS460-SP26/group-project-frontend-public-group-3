@@ -1,4 +1,3 @@
-import { Inter, Montserrat } from "next/font/google";
 import {
   getMovieDetail,
   getShowDetail,
@@ -11,17 +10,6 @@ import SortControl from "@/src/components/SortControl";
 import PaginationNav from "@/src/components/PaginationNav";
 import { parsePageParam } from "@/src/lib/pagination";
 import { ui } from "@/src/lib/ui";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
 
 type SearchMediaType = Extract<MediaType, "movie" | "show">;
 type SearchSort =
@@ -196,11 +184,11 @@ export default async function SearchPage({
   }
 
   return (
-    <div className={`${ui.page} ${inter.className}`}>
+    <div className={ui.page}>
       <div className={ui.container}>
         <header className="mb-12">
           <p className={ui.eyebrow}>Discover</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>Search</h1>
+          <h1 className={ui.title}>Search</h1>
           <p className={ui.subtitle}>
             Find movies and TV shows by title using the search bar above.
           </p>
@@ -208,7 +196,7 @@ export default async function SearchPage({
 
         {hasQuery && errorMessage && (
           <section role="alert" className={`mb-8 ${ui.alert}`}>
-            <p className={`font-semibold ${montserrat.className}`}>
+            <p className={ui.alertTitle}>
               Could not search {mediaLabelPlural}
             </p>
             <p className="mt-1 text-sm">{errorMessage}</p>
@@ -217,7 +205,7 @@ export default async function SearchPage({
 
         {hasQuery && !errorMessage && results.length === 0 && (
           <section className={ui.emptyState}>
-            <p className={`text-lg font-semibold text-brand ${montserrat.className}`}>
+            <p className={ui.emptyStateTitle}>
               No {mediaLabelPlural} found
             </p>
             <p className="mt-2 text-sm text-muted">

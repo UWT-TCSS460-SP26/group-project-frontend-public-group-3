@@ -1,6 +1,5 @@
 "use client";
 
-import { Inter, Montserrat } from "next/font/google";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -30,14 +29,7 @@ import {
   deleteReviewAction,
   saveReviewAction,
 } from "@/src/lib/review-actions";
-import { ui, mediaBadgeClass } from "@/src/lib/ui";
-
-const inter = Inter({ subsets: ["latin"], display: "swap" });
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
+import { displayFontClass, ui, mediaBadgeClass } from "@/src/lib/ui";
 
 type ProfileTab = "all" | "ratings" | "reviews";
 
@@ -266,7 +258,7 @@ function RecentActivitySection({ items }: { items: ActivityItem[] }) {
               />
             </div>
             <p
-              className={`line-clamp-2 text-center text-sm font-semibold text-brand ${montserrat.className}`}
+              className={`${displayFontClass} line-clamp-2 text-center text-sm font-semibold text-brand`}
             >
               {item.title}
             </p>
@@ -321,7 +313,7 @@ function AccountInfoCard({
     <section className={ui.card} aria-labelledby="account-info-heading">
       <h2
         id="account-info-heading"
-        className={`mb-4 text-lg font-semibold text-brand ${montserrat.className}`}
+        className={`${displayFontClass} mb-4 text-lg font-semibold text-brand`}
       >
         Account Info
       </h2>
@@ -433,12 +425,12 @@ function RatingRow({
             {detailHref ? (
               <Link
                 href={detailHref}
-                className={`text-base font-semibold text-brand hover:underline ${montserrat.className}`}
+                className={`${displayFontClass} text-base font-semibold text-brand hover:underline`}
               >
                 {meta.title}
               </Link>
             ) : (
-              <h3 className={`text-base font-semibold text-brand ${montserrat.className}`}>
+              <h3 className={`${displayFontClass} text-base font-semibold text-brand`}>
                 {meta.title}
               </h3>
             )}
@@ -597,7 +589,7 @@ function ReviewRow({
 
   const detailHref =
     isValidTmdbId(tmdbId) ? buildDetailHref(review.mediaType, tmdbId) : null;
-  const titleClass = `text-base font-semibold text-brand ${montserrat.className}`;
+  const titleClass = `${displayFontClass} text-base font-semibold text-brand`;
 
   return (
     <li className="rounded-2xl border border-border bg-mint-soft/60 p-4">
@@ -690,7 +682,7 @@ function ReviewRow({
             <>
               {reviewTitle && (
                 <h3
-                  className={`text-sm font-bold text-brand ${montserrat.className}`}
+                  className={`${displayFontClass} text-sm font-bold text-brand`}
                 >
                   {reviewTitle}
                 </h3>
@@ -786,7 +778,7 @@ function ProfileAuthenticatedContent({
             <section className={ui.darkPanel} aria-labelledby="recent-activity-heading">
               <h2
                 id="recent-activity-heading"
-                className={`mb-4 text-lg font-semibold text-white ${montserrat.className}`}
+                className={`${displayFontClass} mb-4 text-lg font-semibold text-white`}
               >
                 Recent Activity
               </h2>
@@ -827,7 +819,7 @@ function ProfileAuthenticatedContent({
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <h2
                     id="ratings-heading"
-                    className={`text-lg font-semibold text-brand ${montserrat.className}`}
+                    className={`${displayFontClass} text-lg font-semibold text-brand`}
                   >
                     Ratings
                   </h2>
@@ -869,7 +861,7 @@ function ProfileAuthenticatedContent({
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <h2
                     id="reviews-heading"
-                    className={`text-lg font-semibold text-brand ${montserrat.className}`}
+                    className={`${displayFontClass} text-lg font-semibold text-brand`}
                   >
                     Reviews
                   </h2>
@@ -937,11 +929,11 @@ function AuthenticatedProfileShell({
     : username;
 
   return (
-    <div className={`${ui.page} ${inter.className}`}>
+    <div className={ui.page}>
       <div className={ui.container}>
         <header className="mb-10">
           <p className={ui.eyebrow}>Profile Hub</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>
+          <h1 className={ui.title}>
             Welcome back, {displayName}
           </h1>
           <p className={ui.subtitle}>
@@ -996,7 +988,7 @@ export default function ProfileHub({
 
   if (!isClient || status === "loading") {
     return (
-      <div className={`${ui.page} ${inter.className}`}>
+      <div className={ui.page}>
         <div className={ui.container}>
           <LoadingSpinner label="Loading your profile…" />
         </div>
@@ -1006,11 +998,11 @@ export default function ProfileHub({
 
   if (!isAuthenticated || !accessToken) {
     return (
-      <div className={`${ui.page} ${inter.className}`}>
+      <div className={ui.page}>
         <div className={ui.container}>
           <header className="mb-10">
             <p className={ui.eyebrow}>Profile Hub</p>
-            <h1 className={`${ui.title} ${montserrat.className}`}>Profile</h1>
+            <h1 className={ui.title}>Profile</h1>
           </header>
           <section className={ui.emptyState}>
             <p className="mb-6 text-base text-muted">

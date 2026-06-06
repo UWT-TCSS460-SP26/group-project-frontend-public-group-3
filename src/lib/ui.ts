@@ -1,5 +1,6 @@
 /** Prodmast-inspired shared UI class strings */
 import type { MediaType } from "@/lib/types";
+import { displayFontClass } from "@/src/lib/fonts";
 
 export const ui = {
   page: "min-h-dvh bg-surface text-brand",
@@ -12,9 +13,16 @@ export const ui = {
     "shrink-0 rounded-full px-3 py-2 text-sm font-medium text-header-mint transition-colors hover:bg-white/10 hover:text-white sm:px-4",
   headerSearchPanel:
     "mt-5 rounded-3xl bg-mint/90 p-4 ring-1 ring-white/20",
-  eyebrow: "mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted",
-  title: "text-3xl font-bold tracking-tight text-brand sm:text-4xl",
-  subtitle: "mt-3 max-w-xl text-base leading-relaxed text-prose",
+  eyebrow: `${displayFontClass} mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand/70`,
+  title: `${displayFontClass} text-3xl font-bold tracking-tight text-brand sm:text-4xl`,
+  subtitle: "mt-3 max-w-xl text-base font-medium leading-relaxed text-prose",
+  sectionTitle: `${displayFontClass} text-lg font-semibold tracking-tight text-brand`,
+  sectionTitleSpaced: `${displayFontClass} mb-3 text-lg font-semibold tracking-tight text-brand`,
+  sectionTitleOnDark: `${displayFontClass} mb-4 text-lg font-semibold tracking-tight text-white`,
+  cardTitle: `${displayFontClass} text-lg font-semibold leading-snug tracking-tight text-brand`,
+  cardMeta: "text-sm text-muted",
+  cardBody: "text-sm leading-relaxed text-prose",
+  statValue: `${displayFontClass} mt-1 text-2xl font-bold text-brand`,
   card: "rounded-3xl border border-border bg-card p-6 shadow-sm",
   cardInteractive:
     "block w-full rounded-3xl border border-border bg-mint/90 p-5 shadow-sm transition-all hover:border-brand/20 hover:bg-mint hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/60",
@@ -37,9 +45,11 @@ export const ui = {
     "rounded-full border border-border bg-card px-4 py-2.5 text-sm text-brand outline-none transition-colors placeholder:text-muted/60 focus:border-brand focus:ring-2 focus:ring-mint/50",
   select:
     "rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-brand outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-mint/50",
-  label: "text-xs font-semibold uppercase tracking-wide text-muted",
+  label: `${displayFontClass} text-xs font-semibold uppercase tracking-wide text-muted`,
   emptyState:
     "rounded-3xl border border-dashed border-border bg-card px-6 py-14 text-center shadow-sm",
+  emptyStateTitle: `${displayFontClass} text-lg font-semibold text-brand`,
+  alertTitle: `${displayFontClass} font-semibold`,
   paginationLink:
     "shrink-0 rounded-full border border-border bg-card px-3 py-2 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft focus:outline-none focus:ring-2 focus:ring-mint/50 sm:px-5",
   paginationNavTop:
@@ -69,15 +79,20 @@ export const ui = {
     "rounded-3xl border border-border bg-card px-6 py-16 text-center shadow-sm",
   loadingPanel:
     "flex flex-col items-center justify-center gap-4 rounded-3xl border border-border bg-card px-6 py-16 shadow-sm",
-  tabActive: "rounded-full bg-mint px-5 py-2.5 text-sm font-semibold text-brand shadow-sm",
-  tabInactive:
-    "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft",
+  tabActive: `${displayFontClass} rounded-full bg-mint px-5 py-2.5 text-sm font-semibold text-brand shadow-sm`,
+  tabInactive: `${displayFontClass} rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-brand shadow-sm transition-colors hover:border-brand/30 hover:bg-mint-soft`,
   poster: "h-36 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint-soft",
   darkPanel: "rounded-3xl bg-brand-bg p-6 text-white shadow-sm sm:p-8",
   pillOnDark:
     "rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-white/20",
+  aboutLink:
+    `inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 ${displayFontClass} text-sm font-semibold text-brand shadow-sm transition-all hover:border-brand/30 hover:bg-mint hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/50 active:scale-[0.98]`,
+  aboutLinkBlock:
+    `flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border border-border bg-mint-soft/50 px-4 py-3 ${displayFontClass} text-sm font-semibold text-brand shadow-sm transition-all hover:border-brand/30 hover:bg-mint hover:shadow-md focus:outline-none focus:ring-2 focus:ring-mint/50 active:scale-[0.99]`,
 } as const;
 
 export function mediaBadgeClass(mediaType: MediaType): string {
   return mediaType === "show" ? ui.badgeShow : ui.badgeMovie;
 }
+
+export { displayFontClass };

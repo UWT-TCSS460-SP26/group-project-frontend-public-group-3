@@ -1,4 +1,3 @@
-import { Inter, Montserrat } from "next/font/google";
 import { redirect } from "next/navigation";
 
 import {
@@ -21,17 +20,6 @@ import {
   parseRawPageParam,
 } from "@/src/lib/pagination";
 import { ui } from "@/src/lib/ui";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
 
 type BrowseMediaType = Extract<MediaType, "movie" | "show">;
 type BrowseSort =
@@ -205,11 +193,11 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
   }
 
   return (
-    <div className={`${ui.page} ${inter.className}`}>
+    <div className={ui.page}>
       <div className={ui.container}>
         <header className="mb-6">
           <p className={ui.eyebrow}>Browse</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>{pageTitle}</h1>
+          <h1 className={ui.title}>{pageTitle}</h1>
           <p className={ui.subtitle}>
             Trending picks from TMDB. Use the search bar above to find something
             specific.
@@ -220,7 +208,7 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
 
         {errorMessage && (
           <section role="alert" className={`mb-8 ${ui.alert}`}>
-            <p className={`font-semibold ${montserrat.className}`}>
+            <p className={ui.alertTitle}>
               Could not load popular {mediaLabelPlural}
             </p>
             <p className="mt-1 text-sm">{errorMessage}</p>
@@ -229,7 +217,7 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
 
         {!errorMessage && results.length === 0 && (
           <section className={ui.emptyState}>
-            <p className={`text-lg font-semibold text-brand ${montserrat.className}`}>
+            <p className={ui.emptyStateTitle}>
               No popular {mediaLabelPlural} found
             </p>
             <p className="mt-2 text-sm text-muted">

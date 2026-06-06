@@ -1,17 +1,11 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Inter } from "next/font/google";
 
 import { HeaderAuthButtons, HeaderMainNav } from "@/src/components/HeaderAuth";
 import SearchBar from "@/src/components/SearchBar";
 import ThemeToggle from "@/src/components/ThemeToggle";
 import { ui } from "@/src/lib/ui";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
 
 function SearchBarFallback() {
   return (
@@ -24,7 +18,7 @@ function SearchBarFallback() {
 
 export default function Header() {
   return (
-    <header className={`${ui.header} ${inter.className}`}>
+    <header className={ui.header}>
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 lg:px-8">
         <div className="header-shell flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
           <div className="header-shell__top flex w-full items-center justify-between gap-3">

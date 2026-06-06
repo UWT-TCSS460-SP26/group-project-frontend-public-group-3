@@ -44,6 +44,9 @@ export function HeaderMainNav() {
       <Link href="/search" className={ui.headerNavLink}>
         Search
       </Link>
+      <Link href="/about" className={ui.headerNavLink}>
+        About
+      </Link>
       {session?.user ? (
         <Link href="/profile" className={ui.headerNavLink}>
           Profile

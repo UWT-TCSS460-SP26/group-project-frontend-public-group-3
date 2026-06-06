@@ -1,4 +1,3 @@
-import { Inter, Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ApiRequestError, getMovieDetail, getShowDetail, getPopularMovies, getPopularTvShows } from "@/lib/api";
 import type {
@@ -11,18 +10,7 @@ import { isMovieDetail } from "@/lib/types";
 import DetailsUserControls from "@/src/components/DetailsUserControls";
 import PosterImage from "@/src/components/PosterImage";
 import { formatDisplayDate } from "@/src/lib/format-date";
-import { ui, mediaBadgeClass } from "@/src/lib/ui";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
+import { displayFontClass, ui, mediaBadgeClass } from "@/src/lib/ui";
 
 type DetailMediaType = Extract<MediaType, "movie" | "show">;
 
@@ -78,7 +66,7 @@ function ReviewCard({ review }: Readonly<{ review: ReviewResponse }>) {
     <article className="rounded-xl border border-border bg-mint-soft/80 p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3
-          className={`text-sm font-bold text-brand drop-shadow-[0_1px_1px_rgba(15,31,61,0.18)] ${montserrat.className}`}
+          className={`${displayFontClass} text-sm font-bold text-brand drop-shadow-[0_1px_1px_rgba(15,31,61,0.18)]`}
         >
           {heading}
         </h3>
@@ -92,7 +80,7 @@ function ReviewCard({ review }: Readonly<{ review: ReviewResponse }>) {
       <p className="mb-2 text-xs font-medium text-brand">
         {review.author.username}
       </p>
-      <p className="text-sm leading-relaxed text-prose">{review.body}</p>
+      <p className={ui.cardBody}>{review.body}</p>
     </article>
   );
 }
@@ -103,42 +91,28 @@ function CommunitySection({ community }: Readonly<{ community: CommunitySummary 
 
   return (
     <section className={`${ui.darkPanel} mb-8`}>
-      <h2
-        className={`mb-4 text-lg font-semibold text-white ${montserrat.className}`}
-      >
-        Community
-      </h2>
+      <h2 className={ui.sectionTitleOnDark}>Community</h2>
 
       <dl className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl bg-mint-soft px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-            Average score
-          </dt>
-          <dd className="mt-1 text-2xl font-bold text-brand">
+          <dt className={ui.label}>Average score</dt>
+          <dd className={ui.statValue}>
             {hasRatings ? formatScore(community.averageScore) : "—"}
           </dd>
         </div>
         <div className="rounded-xl bg-mint-soft px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-            Ratings
-          </dt>
-          <dd className="mt-1 text-2xl font-bold text-brand">
-            {community.ratingCount}
-          </dd>
+          <dt className={ui.label}>Ratings</dt>
+          <dd className={ui.statValue}>{community.ratingCount}</dd>
         </div>
         <div className="rounded-xl bg-mint-soft px-4 py-3">
-          <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-            Reviews
-          </dt>
-          <dd className="mt-1 text-2xl font-bold text-brand">
-            {community.reviewCount}
-          </dd>
+          <dt className={ui.label}>Reviews</dt>
+          <dd className={ui.statValue}>{community.reviewCount}</dd>
         </div>
       </dl>
 
       {hasReviews ? (
         <div>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-mint/90">
+          <h3 className={`${displayFontClass} mb-3 text-sm font-semibold uppercase tracking-wide text-mint/90`}>
             Recent reviews
           </h3>
           <ul className="grid gap-3">
@@ -199,7 +173,7 @@ function DetailContent({
               )}
             </div>
 
-            <p className="mb-4 text-sm text-muted">
+            <p className={`mb-4 ${ui.cardMeta}`}>
               Released {formatYear(detail.year)}
               {detail.genres.length > 0 && (
                 <>
@@ -211,7 +185,7 @@ function DetailContent({
 
             <dl className="mb-6 grid gap-3 sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
+                <dt className={ui.label}>
                   {isMovie ? "Runtime" : "Seasons"}
                 </dt>
                 <dd className="mt-0.5 text-sm font-medium text-brand">
@@ -222,18 +196,14 @@ function DetailContent({
               </div>
               {!isMovie && (
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                    Episodes
-                  </dt>
+                  <dt className={ui.label}>Episodes</dt>
                   <dd className="mt-0.5 text-sm font-medium text-brand">
                     {detail.episodeCount}
                   </dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                  TMDB rating
-                </dt>
+                <dt className={ui.label}>TMDB rating</dt>
                 <dd className="mt-0.5 text-sm font-medium text-brand">
                   {detail.rating.toFixed(1)} / 10
                 </dd>
@@ -250,12 +220,8 @@ function DetailContent({
       </section>
 
       <section className={`mb-8 ${ui.card}`}>
-        <h2
-          className={`mb-3 text-lg font-semibold text-brand ${montserrat.className}`}
-        >
-          Synopsis
-        </h2>
-        <p className="text-sm leading-relaxed text-prose">
+        <h2 className={ui.sectionTitleSpaced}>Synopsis</h2>
+        <p className={ui.cardBody}>
           {detail.overview?.trim() || "No synopsis available."}
         </p>
       </section>
@@ -285,9 +251,7 @@ function RecommendationSection({ items }: Readonly<{ items: { id: number; title:
   }
   return (
     <section className={`mb-8 ${ui.card}`}>
-      <h2 className={`mb-3 text-lg font-semibold text-brand ${montserrat.className}`}>
-        You might also like
-      </h2>
+      <h2 className={ui.sectionTitleSpaced}>You might also like</h2>
       <ul className="grid gap-5 sm:grid-cols-3">
         {items.map((it) => (
           <li key={`${it.mediaType}-${it.id}`} className="transform transition hover:scale-105 duration-200">
@@ -302,7 +266,9 @@ function RecommendationSection({ items }: Readonly<{ items: { id: number; title:
                   sizes="(max-width: 640px) 100vw, 33vw"
                 />
               </div>
-              <p className="mt-2 text-sm font-medium text-prose">{it.title}</p>
+              <p className={`mt-2 ${displayFontClass} text-sm font-semibold text-brand`}>
+                {it.title}
+              </p>
             </a>
           </li>
         ))}
@@ -319,14 +285,14 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
 
   if (id == null) {
     return (
-      <div className={`${ui.page} ${inter.className}`}>
+      <div className={ui.page}>
         <div className={ui.container}>
           <header className="mb-12">
             <p className={ui.eyebrow}>Discover</p>
-            <h1 className={`${ui.title} ${montserrat.className}`}>Details</h1>
+            <h1 className={ui.title}>Details</h1>
           </header>
           <section className={ui.emptyState}>
-            <p className={`text-lg font-semibold text-brand ${montserrat.className}`}>
+            <p className={ui.emptyStateTitle}>
               Invalid {mediaLabel} link
             </p>
             <p className="mt-2 text-sm text-muted">
@@ -375,12 +341,12 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
 
   return (
     <div
-      className={`${ui.page} ${inter.className}`}
+      className={ui.page}
     >
       <div className={ui.container}>
         <header className="mb-12">
           <p className={ui.eyebrow}>Discover</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>
+          <h1 className={ui.title}>
             {detail?.title ?? "Details"}
           </h1>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
@@ -396,7 +362,7 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
 
         {errorMessage && (
           <section role="alert" className={`mb-8 ${ui.alert}`}>
-            <p className={`font-semibold ${montserrat.className}`}>
+            <p className={ui.alertTitle}>
               Could not load {mediaLabel}
             </p>
             <p className="mt-1 text-sm">{errorMessage}</p>

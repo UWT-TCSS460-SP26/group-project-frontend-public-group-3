@@ -1,28 +1,15 @@
-import { Inter, Montserrat } from "next/font/google";
-
 import { ui } from "@/src/lib/ui";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
 
 export default function DetailsNotFound() {
   return (
-    <div className={`${ui.page} ${inter.className}`}>
+    <div className={ui.page}>
       <div className={ui.container}>
         <header className="mb-12">
           <p className={ui.eyebrow}>Discover</p>
-          <h1 className={`${ui.title} ${montserrat.className}`}>Not found</h1>
+          <h1 className={ui.title}>Not found</h1>
         </header>
         <section className={ui.emptyState}>
-          <p className={`text-lg font-semibold text-brand ${montserrat.className}`}>
+          <p className={ui.emptyStateTitle}>
             404 Not Found
           </p>
           <p className="mt-2 text-sm text-muted">

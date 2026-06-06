@@ -4,16 +4,16 @@
 
 :root {
   --background: #eefde4;
-  --foreground: #0d2b2b;
-  --brand: #0d2b2b;
+  --foreground: #063530;
+  --brand: #063530;
   --brand-bg: #0d2b2b;
   --brand-bg-hover: #143838;
   --mint: #d9ffc5;
   --mint-soft: #eefde4;
   --surface: #f4f7f4;
-  --muted: #5a6b6b;
-  --prose: #4a5c5c;
-  --border: #d6e0de;
+  --muted: #2a7568;
+  --prose: #0f5248;
+  --border: #b8d4cc;
   --card: #ffffff;
   --accent: #e8a838;
   --badge-movie-bg: #dbeafe;
@@ -67,8 +67,9 @@ html[data-theme="dark"] {
   --color-badge-show-bg: var(--badge-show-bg);
   --color-badge-show-text: var(--badge-show-text);
   --color-header-mint: var(--header-mint);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-family), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
 html {
@@ -82,8 +83,12 @@ body {
   overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.font-display {
+  font-family: var(--font-display-family), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Desktop + mobile landscape: single row like original header */
