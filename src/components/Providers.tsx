@@ -11,7 +11,7 @@ import SessionExpiryWarning from '@/src/components/SessionExpiryWarning';
  */
 export default function Providers({ children }: { children: ReactNode }) {
     return (
-        <SessionProvider refetchInterval={60}>
+        <SessionProvider refetchInterval={60} refetchOnWindowFocus={false}>
             <SessionExpiryWarning />
             {children}
         </SessionProvider>

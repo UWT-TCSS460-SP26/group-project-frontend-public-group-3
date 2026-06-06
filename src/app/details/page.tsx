@@ -1,8 +1,6 @@
 import { Inter, Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ApiRequestError, getMovieDetail, getShowDetail, getPopularMovies, getPopularTvShows } from "@/lib/api";
-import { getMyRatingForTitle } from "@/lib/ratings-server";
-import { getMyReviewForTitle } from "@/lib/reviews-server";
 import type {
   CommunitySummary,
   MediaDetailResponse,
@@ -10,9 +8,8 @@ import type {
   ReviewResponse,
 } from "@/lib/types";
 import { isMovieDetail } from "@/lib/types";
-import RatingControl from "@/src/components/RatingControl";
-import ReviewControl from "@/src/components/ReviewControl";
-import { auth } from "@/src/lib/auth";
+import DetailsUserControls from "@/src/components/DetailsUserControls";
+import PosterImage from "@/src/components/PosterImage";
 import { formatDisplayDate } from "@/src/lib/format-date";
 import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
@@ -162,33 +159,14 @@ function CommunitySection({ community }: Readonly<{ community: CommunitySummary 
   );
 }
 
-type UserRatingState = {
-  id: number;
-  score: number;
-};
-
-type UserReviewState = {
-  id: number;
-  title: string | null;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 function DetailContent({
   detail,
   mediaType,
-  isSignedIn,
   signInCallbackUrl,
-  userRating,
-  userReview,
 }: Readonly<{
   detail: MediaDetailResponse;
   mediaType: DetailMediaType;
-  isSignedIn: boolean;
   signInCallbackUrl: string;
-  userRating: UserRatingState | null;
-  userReview: UserReviewState | null;
 }>) {
   const isMovie = isMovieDetail(detail);
   const mediaLabel = isMovie ? "movie" : "TV show";
@@ -198,18 +176,15 @@ function DetailContent({
       <section className={`mb-8 overflow-hidden ${ui.card}`}>
         <div className="flex flex-col gap-6 p-6 sm:flex-row sm:gap-8">
           <div className="mx-auto h-72 w-48 shrink-0 overflow-hidden rounded-xl bg-mint-soft sm:mx-0">
-            {detail.posterUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- TMDB posters; avoids next.config remotePatterns
-              <img
-                src={detail.posterUrl}
-                alt={`${detail.title} poster`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-muted/70">
-                No poster
-              </div>
-            )}
+            <PosterImage
+              src={detail.posterUrl}
+              alt={`${detail.title} poster`}
+              width={192}
+              height={288}
+              size="w342"
+              priority
+              sizes="192px"
+            />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -265,28 +240,11 @@ function DetailContent({
               </div>
             </dl>
 
-            <RatingControl
-              key={
-                userRating
-                  ? `${userRating.id}-${userRating.score}`
-                  : "no-rating"
-              }
+            <DetailsUserControls
               tmdbId={detail.id}
               mediaType={mediaType}
-              isSignedIn={isSignedIn}
               signInCallbackUrl={signInCallbackUrl}
-              initialRating={userRating}
             />
-
-            <div className="mt-4">
-              <ReviewControl
-                tmdbId={detail.id}
-                mediaType={mediaType}
-                isSignedIn={isSignedIn}
-                signInCallbackUrl={signInCallbackUrl}
-                existingReview={userReview}
-              />
-            </div>
           </div>
         </div>
       </section>
@@ -335,12 +293,14 @@ function RecommendationSection({ items }: Readonly<{ items: { id: number; title:
           <li key={`${it.mediaType}-${it.id}`} className="transform transition hover:scale-105 duration-200">
             <a href={`/details?type=${it.mediaType}&id=${it.id}`} className="block">
               <div className="h-40 w-full overflow-hidden rounded-md bg-mint-soft">
-                {it.posterUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={it.posterUrl} alt={`${it.title} poster`} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm text-muted">No poster</div>
-                )}
+                <PosterImage
+                  src={it.posterUrl}
+                  alt={`${it.title} poster`}
+                  width={342}
+                  height={513}
+                  size="w342"
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                />
               </div>
               <p className="mt-2 text-sm font-medium text-prose">{it.title}</p>
             </a>
@@ -382,15 +342,10 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
   }
 
   const validId = id;
-
-  const session = await auth();
-  const isSignedIn = Boolean(session?.accessToken);
   const signInCallbackUrl = `/details?type=${mediaType}&id=${validId}`;
 
   let detail: MediaDetailResponse | null = null;
   let errorMessage: string | null = null;
-  let userRating: UserRatingState | null = null;
-  let userReview: UserReviewState | null = null;
 
   try {
     detail =
@@ -407,41 +362,18 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
         : "We could not load this title. Please try again.";
   }
 
-  async function fetchUserContent() {
-    if (!isSignedIn || !detail) return;
-    try {
-      const existing = await getMyRatingForTitle(validId, mediaType);
-      if (existing) {
-        userRating = { id: existing.id, score: existing.score };
-      }
-    } catch {
-      // optional
-    }
-    try {
-      const existingReview = await getMyReviewForTitle(validId, mediaType);
-      if (existingReview) {
-        userReview = {
-          id: existingReview.id,
-          title: existingReview.title,
-          body: existingReview.body,
-          createdAt: existingReview.createdAt,
-          updatedAt: existingReview.updatedAt,
-        };
-      }
-    } catch {
-      // optional
-    }
+  let recommendations: { id: number; title: string; posterUrl: string | null; mediaType: string }[] = [];
+  if (detail) {
+    const recs = await fetchRecommendations(detail, mediaType === "movie");
+    recommendations = recs.map((r) => ({
+      id: r.id,
+      title: r.title,
+      posterUrl: r.posterUrl,
+      mediaType: r.mediaType,
+    }));
   }
 
-  await fetchUserContent();
-
-    let recommendations: { id: number; title: string; posterUrl: string | null; mediaType: string }[] = [];
-    if (detail) {
-      const recs = await fetchRecommendations(detail, mediaType === "movie");
-      recommendations = recs.map((r) => ({ id: r.id, title: r.title, posterUrl: r.posterUrl, mediaType: r.mediaType }));
-    }
-
-    return (
+  return (
     <div
       className={`${ui.page} ${inter.className}`}
     >
@@ -476,10 +408,7 @@ export default async function DetailsPage({ searchParams }: Readonly<DetailsPage
             <DetailContent
               detail={detail}
               mediaType={mediaType}
-              isSignedIn={isSignedIn}
               signInCallbackUrl={signInCallbackUrl}
-              userRating={userRating}
-              userReview={userReview}
             />
             <RecommendationSection items={recommendations} />
           </>

@@ -90,6 +90,10 @@ lib/
   types.ts          # Shared API response types
 ```
 
+## Performance
+
+Lighthouse-driven optimizations (LCP, image delivery, bfcache) are documented in [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md).
+
 ## Deployment
 
 The production site is hosted on [Vercel](https://vercel.com/). Set the same environment variables in the Vercel project settings. Ensure the OAuth redirect URI for production is registered in auth-squared:

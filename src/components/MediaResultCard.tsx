@@ -1,6 +1,7 @@
 import { Montserrat } from "next/font/google";
 
 import type { MediaListItem, MediaType } from "@/lib/types";
+import PosterImage from "@/src/components/PosterImage";
 import { ui, mediaBadgeClass } from "@/src/lib/ui";
 
 const montserrat = Montserrat({
@@ -24,19 +25,14 @@ export default function MediaResultCard({ item }: { item: MediaListItem }) {
     <a href={buildDetailHref(item.mediaType, item.id)} className={ui.cardInteractive}>
       <article className="flex items-start gap-5">
         <div className={ui.poster}>
-          {item.posterUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- TMDB posters; avoids next.config remotePatterns
-            <img
-              src={item.posterUrl}
-              alt={`${item.title} poster`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
-              No poster
-            </div>
-          )}
+          <PosterImage
+            src={item.posterUrl}
+            alt={`${item.title} poster`}
+            width={96}
+            height={144}
+            size="w185"
+            sizes="96px"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex flex-wrap items-center gap-2">

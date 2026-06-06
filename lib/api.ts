@@ -109,7 +109,7 @@ export async function getPopularTvShows(
 
 export async function getMovieDetail(id: number): Promise<MovieDetailResponse> {
   const url = `${getApiBaseUrl()}/v1/movies/${id}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { next: { revalidate: 300 } });
 
   if (!res.ok) {
     throw new ApiRequestError(await parseApiError(res), res.status);
@@ -120,7 +120,7 @@ export async function getMovieDetail(id: number): Promise<MovieDetailResponse> {
 
 export async function getShowDetail(id: number): Promise<ShowDetailResponse> {
   const url = `${getApiBaseUrl()}/v1/tv-shows/${id}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { next: { revalidate: 300 } });
 
   if (!res.ok) {
     throw new ApiRequestError(await parseApiError(res), res.status);

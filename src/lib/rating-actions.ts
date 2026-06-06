@@ -12,6 +12,29 @@ export type DeleteRatingResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type GetMyRatingResult =
+  | { ok: true; rating: RatingResponse | null }
+  | { ok: false; error: string };
+
+export async function getMyRatingAction(
+  tmdbId: number,
+  mediaType: MediaType,
+): Promise<GetMyRatingResult> {
+  try {
+    const { getMyRatingForTitle } = await import("@/lib/ratings-server");
+    const rating = await getMyRatingForTitle(tmdbId, mediaType);
+    return { ok: true, rating };
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Could not load your rating.";
+    return { ok: false, error: message };
+  }
+}
+
 export async function submitRatingAction(
   tmdbId: number,
   mediaType: MediaType,

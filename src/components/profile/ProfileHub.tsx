@@ -13,6 +13,7 @@ import {
 import type { ReviewMediaMeta } from "@/lib/profile-server";
 import type { MyReviewResponse } from "@/lib/reviews-server";
 import { normalizePosterUrl } from "@/lib/poster-url";
+import PosterImage from "@/src/components/PosterImage";
 import { isValidTmdbId } from "@/lib/tmdb-id";
 import type { EnrichedRatingResponse, MediaType } from "@/lib/types";
 import { SignInButton } from "@/src/components/AuthButtons";
@@ -222,19 +223,14 @@ function PosterThumb({
 }) {
   return (
     <div className={className}>
-      {normalizePosterUrl(posterUrl) ? (
-        // eslint-disable-next-line @next/next/no-img-element -- TMDB posters
-        <img
-          src={normalizePosterUrl(posterUrl)!}
-          alt={`${title} poster`}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
-          No poster
-        </div>
-      )}
+      <PosterImage
+        src={posterUrl}
+        alt={`${title} poster`}
+        width={96}
+        height={144}
+        size="w185"
+        sizes="96px"
+      />
     </div>
   );
 }
@@ -260,19 +256,14 @@ function RecentActivitySection({ items }: { items: ActivityItem[] }) {
         const cardInner = (
           <>
             <div className="mx-auto mb-2 h-44 w-28 overflow-hidden rounded-xl bg-mint-soft">
-              {normalizePosterUrl(item.posterUrl) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={normalizePosterUrl(item.posterUrl)!}
-                  alt={`${item.title} poster`}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
-                  No poster
-                </div>
-              )}
+              <PosterImage
+                src={item.posterUrl}
+                alt={`${item.title} poster`}
+                width={112}
+                height={176}
+                size="w185"
+                sizes="112px"
+              />
             </div>
             <p
               className={`line-clamp-2 text-center text-sm font-semibold text-brand ${montserrat.className}`}

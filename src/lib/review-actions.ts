@@ -17,6 +17,29 @@ export type DeleteReviewResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type GetMyReviewResult =
+  | { ok: true; review: ReviewResponse | null }
+  | { ok: false; error: string };
+
+export async function getMyReviewAction(
+  tmdbId: number,
+  mediaType: MediaType,
+): Promise<GetMyReviewResult> {
+  try {
+    const { getMyReviewForTitle } = await import("@/lib/reviews-server");
+    const review = await getMyReviewForTitle(tmdbId, mediaType);
+    return { ok: true, review };
+  } catch (err) {
+    const message =
+      err instanceof ApiRequestError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Could not load your review.";
+    return { ok: false, error: message };
+  }
+}
+
 export async function upsertReviewAction(
   tmdbId: number,
   mediaType: MediaType,
