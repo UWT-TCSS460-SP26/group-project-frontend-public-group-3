@@ -3,18 +3,32 @@ import { ui } from "@/src/lib/ui";
 
 type BrowseMediaType = Extract<MediaType, "movie" | "show">;
 
-function buildTabHref(type: BrowseMediaType): string {
+function buildTabHref(
+  type: BrowseMediaType,
+  sort?: string,
+  genre?: string,
+): string {
   const params = new URLSearchParams({
     type,
     page: "1",
   });
+  if (sort && sort !== "popular") {
+    params.set("sort", sort);
+  }
+  if (genre && genre !== "all") {
+    params.set("genre", genre);
+  }
   return `/?${params.toString()}`;
 }
 
 export default function PopularBrowseTabs({
   activeType,
+  sort = "popular",
+  genre = "all",
 }: {
   activeType: BrowseMediaType;
+  sort?: string;
+  genre?: string;
 }) {
   const isMovie = activeType === "movie";
 
@@ -24,14 +38,14 @@ export default function PopularBrowseTabs({
       aria-label="Popular browse categories"
     >
       <a
-        href={buildTabHref("movie")}
+        href={buildTabHref("movie", sort, genre)}
         className={isMovie ? ui.tabActive : ui.tabInactive}
         aria-current={isMovie ? "page" : undefined}
       >
         Popular Movies
       </a>
       <a
-        href={buildTabHref("show")}
+        href={buildTabHref("show", sort, genre)}
         className={!isMovie ? ui.tabActive : ui.tabInactive}
         aria-current={!isMovie ? "page" : undefined}
       >
