@@ -5,6 +5,7 @@ type BrowseMediaType = Extract<MediaType, "movie" | "show">;
 
 function buildTabHref(
   type: BrowseMediaType,
+  activeType: BrowseMediaType,
   sort?: string,
   genre?: string,
 ): string {
@@ -15,7 +16,7 @@ function buildTabHref(
   if (sort && sort !== "popular") {
     params.set("sort", sort);
   }
-  if (genre && genre !== "all") {
+  if (type === activeType && genre && genre !== "all") {
     params.set("genre", genre);
   }
   return `/?${params.toString()}`;
@@ -38,14 +39,14 @@ export default function PopularBrowseTabs({
       aria-label="Popular browse categories"
     >
       <a
-        href={buildTabHref("movie", sort, genre)}
+        href={buildTabHref("movie", activeType, sort, genre)}
         className={isMovie ? ui.tabActive : ui.tabInactive}
         aria-current={isMovie ? "page" : undefined}
       >
         Popular Movies
       </a>
       <a
-        href={buildTabHref("show", sort, genre)}
+        href={buildTabHref("show", activeType, sort, genre)}
         className={!isMovie ? ui.tabActive : ui.tabInactive}
         aria-current={!isMovie ? "page" : undefined}
       >
