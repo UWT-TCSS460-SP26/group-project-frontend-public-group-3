@@ -7,6 +7,7 @@ export type MediaListItem = {
   posterUrl: string | null;
   overview: string;
   mediaType: MediaType;
+  genres?: string[];
 };
 
 export type MediaListResponse = {

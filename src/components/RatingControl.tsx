@@ -20,11 +20,11 @@ type StoredUserRating = {
 };
 
 function readStoredRating(storageKey: string): StoredUserRating | null {
-  if (globalThis == null || (globalThis as any).localStorage == null) {
+  if (typeof window === "undefined" || window.localStorage == null) {
     return null;
   }
 
-  const raw = (globalThis as any).localStorage.getItem(storageKey);
+  const raw = window.localStorage.getItem(storageKey);
   if (!raw) {
     return null;
   }

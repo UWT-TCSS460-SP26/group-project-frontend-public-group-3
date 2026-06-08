@@ -29,9 +29,19 @@ import {
   deleteReviewAction,
   saveReviewAction,
 } from "@/src/lib/review-actions";
+import SortControl from "@/src/components/SortControl";
 import { displayFontClass, ui, mediaBadgeClass } from "@/src/lib/ui";
 
 type ProfileTab = "all" | "ratings" | "reviews";
+
+type ProfileSort = "newest" | "oldest" | "rating_desc" | "rating_asc";
+
+const PROFILE_SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "rating_desc", label: "Highest Rating" },
+  { value: "rating_asc", label: "Lowest Rating" },
+] as const satisfies ReadonlyArray<{ value: ProfileSort; label: string }>;
 
 type MediaMeta = {
   title: string;
@@ -104,6 +114,91 @@ function ratingMeta(rating: EnrichedRatingResponse): MediaMeta {
 
 function mediaKey(mediaType: MediaType, tmdbId: number): string {
   return `${mediaType}:${tmdbId}`;
+}
+
+function sortByUpdatedAt<T extends { updatedAt: string }>(
+  items: T[],
+  order: "asc" | "desc",
+): T[] {
+  return [...items].sort((a, b) => {
+    const diff =
+      new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+    return order === "asc" ? diff : -diff;
+  });
+}
+
+function sortRatings(
+  items: EnrichedRatingResponse[],
+  sort: ProfileSort,
+): EnrichedRatingResponse[] {
+  if (sort === "newest") {
+    return sortByUpdatedAt(items, "desc");
+  }
+  if (sort === "oldest") {
+    return sortByUpdatedAt(items, "asc");
+  }
+
+  return [...items].sort((a, b) => {
+    const diff = a.score - b.score;
+    return sort === "rating_asc" ? diff : -diff;
+  });
+}
+
+function buildRatingScoreLookup(
+  ratings: EnrichedRatingResponse[],
+): Map<string, number> {
+  const lookup = new Map<string, number>();
+
+  for (const rating of ratings) {
+    if (!isValidTmdbId(rating.tmdbId)) continue;
+    lookup.set(mediaKey(rating.mediaType, rating.tmdbId), rating.score);
+  }
+
+  return lookup;
+}
+
+function reviewRatingScore(
+  review: MyReviewResponse,
+  ratingScores: Map<string, number>,
+): number | null {
+  if (!isValidTmdbId(review.tmdbId)) {
+    return null;
+  }
+
+  return ratingScores.get(mediaKey(review.mediaType, review.tmdbId)) ?? null;
+}
+
+function sortReviews(
+  items: MyReviewResponse[],
+  sort: ProfileSort,
+  ratingScores: Map<string, number>,
+): MyReviewResponse[] {
+  if (sort === "newest") {
+    return sortByUpdatedAt(items, "desc");
+  }
+  if (sort === "oldest") {
+    return sortByUpdatedAt(items, "asc");
+  }
+
+  return [...items].sort((a, b) => {
+    const scoreA = reviewRatingScore(a, ratingScores);
+    const scoreB = reviewRatingScore(b, ratingScores);
+
+    if (scoreA == null && scoreB == null) {
+      return (
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+    }
+    if (scoreA == null) return 1;
+    if (scoreB == null) return -1;
+
+    const diff = scoreA - scoreB;
+    if (diff !== 0) {
+      return sort === "rating_asc" ? diff : -diff;
+    }
+
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
 }
 
 /** Merge ratings and reviews into a single recent-activity feed sorted by recency. */
@@ -752,12 +847,28 @@ function ProfileAuthenticatedContent({
   initialLoadError: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("all");
+  const [sort, setSort] = useState<ProfileSort>("newest");
   const [ratings, setRatings] = useState(initialRatings);
   const [reviews, setReviews] = useState(initialReviews);
 
   const reviewMetaLookup = useMemo(
     () => metaLookupToMap(reviewMetaRecord),
     [reviewMetaRecord],
+  );
+
+  const ratingScores = useMemo(
+    () => buildRatingScoreLookup(ratings),
+    [ratings],
+  );
+
+  const sortedRatings = useMemo(
+    () => sortRatings(ratings, sort),
+    [ratings, sort],
+  );
+
+  const sortedReviews = useMemo(
+    () => sortReviews(reviews, sort, ratingScores),
+    [reviews, sort, ratingScores],
   );
 
   const recentActivity = useMemo(
@@ -787,32 +898,41 @@ function ProfileAuthenticatedContent({
 
             <AccountInfoCard username={username} sub={sub} role={role} />
 
-            <nav
-              className="flex flex-wrap gap-2"
-              aria-label="Filter ratings and reviews"
-            >
-              {(
-                [
-                  ["all", "All"],
-                  ["ratings", "Ratings"],
-                  ["reviews", "Reviews"],
-                ] as const
-              ).map(([tab, label]) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={
-                    activeTab === tab ? ui.tabActive : ui.tabInactive
-                  }
-                  aria-pressed={activeTab === tab}
-                >
-                  {label}
-                  {tab === "ratings" && ` (${ratings.length})`}
-                  {tab === "reviews" && ` (${reviews.length})`}
-                </button>
-              ))}
-            </nav>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <nav
+                className="flex flex-wrap gap-2"
+                aria-label="Filter ratings and reviews"
+              >
+                {(
+                  [
+                    ["all", "All"],
+                    ["ratings", "Ratings"],
+                    ["reviews", "Reviews"],
+                  ] as const
+                ).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={
+                      activeTab === tab ? ui.tabActive : ui.tabInactive
+                    }
+                    aria-pressed={activeTab === tab}
+                  >
+                    {label}
+                    {tab === "ratings" && ` (${ratings.length})`}
+                    {tab === "reviews" && ` (${reviews.length})`}
+                  </button>
+                ))}
+              </nav>
+
+              <SortControl
+                selectId="profile-sort"
+                currentSort={sort}
+                options={[...PROFILE_SORT_OPTIONS]}
+                onChange={(value) => setSort(value as ProfileSort)}
+              />
+            </div>
 
             {showRatings && (
               <section className={ui.card} aria-labelledby="ratings-heading">
@@ -833,7 +953,7 @@ function ProfileAuthenticatedContent({
                   </p>
                 ) : (
                   <ul className="space-y-4">
-                    {ratings.map((rating) => (
+                    {sortedRatings.map((rating) => (
                       <RatingRow
                         key={rating.id}
                         rating={rating}
@@ -875,7 +995,7 @@ function ProfileAuthenticatedContent({
                   </p>
                 ) : (
                   <ul className="space-y-4">
-                    {reviews.map((review) => (
+                    {sortedReviews.map((review) => (
                       <ReviewRow
                         key={review.id}
                         review={review}
