@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
+import type { ReactNode } from "react";
 
 import {
   getMovieDetail,
@@ -30,8 +32,11 @@ type BrowseSort =
   | "review_desc"
   | "review_asc";
 
-/** Max TMDB popular pages scanned per request when filtering by genre. */
-const GENRE_FILTER_MAX_TMDB_PAGES = 25;
+/** TMDB popular pages scanned for genre filtering (keeps requests bounded). */
+const GENRE_FILTER_MAX_TMDB_PAGES = 8;
+
+/** Popular list pages fetched in parallel during a genre scan batch. */
+const GENRE_LIST_FETCH_CONCURRENCY = 4;
 
 type HomePageProps = {
   searchParams: Promise<{ type?: string; page?: string; sort?: string; genre?: string }>;
@@ -197,12 +202,96 @@ function collectGenreOptions(items: MediaListItem[]): { value: string; label: st
   ];
 }
 
+function withSelectedGenreOption(
+  options: { value: string; label: string }[],
+  selectedGenre: string,
+): { value: string; label: string }[] {
+  if (selectedGenre === "all") {
+    return options;
+  }
+
+  if (options.some((option) => option.value === selectedGenre)) {
+    return options;
+  }
+
+  const genreOptions = options.filter((option) => option.value !== "all");
+  genreOptions.push({ value: selectedGenre, label: selectedGenre });
+  genreOptions.sort((a, b) => a.label.localeCompare(b.label));
+
+  return [{ value: "all", label: "All Genres" }, ...genreOptions];
+}
+
+function buildGenreResultsSummary(
+  genre: string,
+  genreUnitLabel: string,
+  filteredCount: number,
+  currentPage: number,
+  paginationTotalPages: number,
+  resultsOnPage: number,
+): ReactNode {
+  if (filteredCount === 0) {
+    return <>No {genre} {genreUnitLabel} found in popular titles</>;
+  }
+
+  if (paginationTotalPages <= 1) {
+    return (
+      <>
+        <span className="font-semibold text-brand">{filteredCount}</span>{" "}
+        {genre} {genreUnitLabel}
+      </>
+    );
+  }
+
+  const rangeStart = (currentPage - 1) * TMDB_POPULAR_PAGE_SIZE + 1;
+  const rangeEnd = rangeStart + resultsOnPage - 1;
+
+  return (
+    <>
+      Showing{" "}
+      <span className="font-semibold text-brand">
+        {rangeStart}–{rangeEnd}
+      </span>{" "}
+      of{" "}
+      <span className="font-semibold text-brand">{filteredCount}</span>{" "}
+      {genre} {genreUnitLabel}
+    </>
+  );
+}
+
 function filterByGenre(items: MediaListItem[], genre: string): MediaListItem[] {
   if (genre === "all") {
     return items;
   }
 
   return items.filter((item) => (item.genres ?? []).includes(genre));
+}
+
+function appendUniqueGenreMatches(
+  pool: MediaListItem[],
+  seenIds: Set<number>,
+  matches: MediaListItem[],
+): void {
+  for (const item of matches) {
+    if (seenIds.has(item.id)) {
+      continue;
+    }
+    seenIds.add(item.id);
+    pool.push(item);
+  }
+}
+
+function detailsMapToRecord(
+  detailsById: Map<number, BrowseItemDetails>,
+): Record<string, BrowseItemDetails> {
+  return Object.fromEntries(detailsById);
+}
+
+function recordToDetailsMap(
+  record: Record<string, BrowseItemDetails>,
+): Map<number, BrowseItemDetails> {
+  return new Map(
+    Object.entries(record).map(([id, detail]) => [Number(id), detail]),
+  );
 }
 
 function buildMetricMap(
@@ -228,25 +317,104 @@ async function applyBrowseFilters(
   items: MediaListItem[],
   isMovie: boolean,
   sort: BrowseSort,
-  genre: string,
-): Promise<{
-  results: MediaListItem[];
-  genreOptions: { value: string; label: string }[];
-}> {
+): Promise<{ results: MediaListItem[] }> {
   if (items.length === 0) {
-    return { results: items, genreOptions: [{ value: "all", label: "All Genres" }] };
+    return { results: items };
   }
 
   const details = await fetchBrowseItemDetails(items, isMovie);
   let results = attachGenres(items, details);
-  const genreOptions = collectGenreOptions(results);
 
   if (sort !== "popular") {
     const metricMap = buildMetricMap(results, details, sort);
     results = sortResultsByMetric(results, metricMap, sort);
   }
 
-  return { results, genreOptions };
+  return { results };
+}
+
+async function scanPopularCatalog(
+  fetchPopular: (page: number) => ReturnType<typeof getPopularMovies>,
+  isMovie: boolean,
+  tmdbTotalPages: number,
+): Promise<{
+  catalog: MediaListItem[];
+  detailsById: Map<number, BrowseItemDetails>;
+}> {
+  const maxScanPages = Math.min(tmdbTotalPages, GENRE_FILTER_MAX_TMDB_PAGES);
+  const catalog: MediaListItem[] = [];
+  const seenIds = new Set<number>();
+  const detailsById = new Map<number, BrowseItemDetails>();
+
+  for (
+    let batchStart = 1;
+    batchStart <= maxScanPages;
+    batchStart += GENRE_LIST_FETCH_CONCURRENCY
+  ) {
+    const batchEnd = Math.min(
+      batchStart + GENRE_LIST_FETCH_CONCURRENCY - 1,
+      maxScanPages,
+    );
+    const pageNumbers = Array.from(
+      { length: batchEnd - batchStart + 1 },
+      (_, index) => batchStart + index,
+    );
+    const responses = await Promise.all(
+      pageNumbers.map((pageNumber) => fetchPopular(pageNumber)),
+    );
+    const batchItems = responses.flatMap((response) => response.results);
+    const details = await fetchBrowseItemDetails(batchItems, isMovie);
+
+    for (const [id, detail] of details) {
+      detailsById.set(id, detail);
+    }
+
+    for (const response of responses) {
+      const enriched = attachGenres(response.results, details);
+      appendUniqueGenreMatches(catalog, seenIds, enriched);
+    }
+  }
+
+  return { catalog, detailsById };
+}
+
+async function getCachedPopularCatalog(
+  isMovie: boolean,
+  tmdbTotalPages: number,
+): Promise<{
+  catalog: MediaListItem[];
+  detailsById: Map<number, BrowseItemDetails>;
+}> {
+  const cached = await unstable_cache(
+    async () => {
+      const fetchPopular = isMovie ? getPopularMovies : getPopularTvShows;
+      const scan = await scanPopularCatalog(
+        fetchPopular,
+        isMovie,
+        tmdbTotalPages,
+      );
+      return {
+        catalog: scan.catalog,
+        detailsById: detailsMapToRecord(scan.detailsById),
+      };
+    },
+    ["popular-catalog", isMovie ? "movie" : "show", String(tmdbTotalPages)],
+    { revalidate: 300 },
+  )();
+
+  return {
+    catalog: cached.catalog,
+    detailsById: recordToDetailsMap(cached.detailsById),
+  };
+}
+
+async function loadBrowseGenreOptions(
+  isMovie: boolean,
+  tmdbTotalPages: number,
+  selectedGenre: string,
+): Promise<{ value: string; label: string }[]> {
+  const { catalog } = await getCachedPopularCatalog(isMovie, tmdbTotalPages);
+  return withSelectedGenreOption(collectGenreOptions(catalog), selectedGenre);
 }
 
 async function collectGenreFilteredPage(
@@ -257,64 +425,38 @@ async function collectGenreFilteredPage(
   tmdbTotalPages: number,
 ): Promise<{
   results: MediaListItem[];
-  genreOptions: { value: string; label: string }[];
   paginationTotalPages: number;
   currentPage: number;
   filteredCount: number;
 }> {
-  const fetchPopular = isMovie ? getPopularMovies : getPopularTvShows;
   const pageSize = TMDB_POPULAR_PAGE_SIZE;
-  const startIdx = (genrePage - 1) * pageSize;
-  const endIdx = startIdx + pageSize;
-  const maxScanPages = Math.min(tmdbTotalPages, GENRE_FILTER_MAX_TMDB_PAGES);
+  const { catalog, detailsById } = await getCachedPopularCatalog(
+    isMovie,
+    tmdbTotalPages,
+  );
 
-  let pool: MediaListItem[] = [];
-  const detailsById = new Map<number, BrowseItemDetails>();
-  let genreOptions: { value: string; label: string }[] = [
-    { value: "all", label: "All Genres" },
-  ];
-  let scannedPages = 0;
-
-  for (let tmdbPage = 1; tmdbPage <= maxScanPages; tmdbPage++) {
-    const data = await fetchPopular(tmdbPage);
-    scannedPages = tmdbPage;
-
-    const details = await fetchBrowseItemDetails(data.results, isMovie);
-    for (const [id, detail] of details) {
-      detailsById.set(id, detail);
-    }
-
-    const enriched = attachGenres(data.results, details);
-    if (tmdbPage === 1) {
-      genreOptions = collectGenreOptions(enriched);
-    }
-
-    pool.push(...filterByGenre(enriched, genre));
-
-    if (sort === "popular" && pool.length >= endIdx) {
-      break;
-    }
-  }
+  let pool = filterByGenre(catalog, genre);
 
   if (sort !== "popular" && pool.length > 1) {
     const metricMap = buildMetricMap(pool, detailsById, sort);
     pool = sortResultsByMetric(pool, metricMap, sort);
   }
 
-  const results = pool.slice(startIdx, endIdx);
-  const canScanMore = scannedPages < maxScanPages;
-  const hasNextPage = pool.length > endIdx || (canScanMore && pool.length >= endIdx);
-  const knownPages = Math.max(1, Math.ceil(pool.length / pageSize));
-  const paginationTotalPages = hasNextPage
-    ? Math.max(knownPages, genrePage + 1)
-    : Math.max(knownPages, genrePage);
+  const filteredCount = pool.length;
+  const paginationTotalPages =
+    filteredCount === 0 ? 0 : Math.ceil(filteredCount / pageSize);
+  const currentPage =
+    paginationTotalPages === 0
+      ? 1
+      : clampPage(genrePage, paginationTotalPages);
+  const startIdx = (currentPage - 1) * pageSize;
+  const results = pool.slice(startIdx, startIdx + pageSize);
 
   return {
     results,
-    genreOptions,
     paginationTotalPages,
-    currentPage: genrePage,
-    filteredCount: pool.length,
+    currentPage,
+    filteredCount,
   };
 }
 
@@ -348,6 +490,12 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
     hasBrowseData = seedData.results.length > 0;
     paginationTotalPages = capPopularTotalPages(seedData.totalPages);
 
+    const genreOptionsPromise = loadBrowseGenreOptions(
+      isMovie,
+      paginationTotalPages,
+      genre,
+    );
+
     if (genre === "all") {
       const data = page === 1 ? seedData : await fetchPopular(page);
       results = data.results;
@@ -359,9 +507,8 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
         results.length,
       );
 
-      const filtered = await applyBrowseFilters(results, isMovie, sort, genre);
+      const filtered = await applyBrowseFilters(results, isMovie, sort);
       results = filtered.results;
-      genreOptions = filtered.genreOptions;
     } else {
       const genreBrowse = await collectGenreFilteredPage(
         isMovie,
@@ -370,12 +517,28 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
         sort,
         paginationTotalPages,
       );
+
+      if (
+        genreBrowse.paginationTotalPages > 0 &&
+        page > genreBrowse.paginationTotalPages
+      ) {
+        redirect(
+          buildPageHref(
+            mediaType,
+            genreBrowse.paginationTotalPages,
+            sort,
+            genre,
+          ),
+        );
+      }
+
       results = genreBrowse.results;
-      genreOptions = genreBrowse.genreOptions;
       paginationTotalPages = genreBrowse.paginationTotalPages;
       currentPage = genreBrowse.currentPage;
       browsableCount = genreBrowse.filteredCount;
     }
+
+    genreOptions = await genreOptionsPromise;
   } catch (err) {
     errorMessage =
       err instanceof Error
@@ -389,6 +552,13 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
     popularUnitLabel = `movie${popularCountSuffix}`;
   }
 
+  const genreUnitLabel =
+    browsableCount === 1
+      ? isMovie
+        ? "movie"
+        : "TV show"
+      : mediaLabelPlural;
+
   const resultsSummary =
     genre === "all"
       ? (
@@ -397,18 +567,13 @@ export default async function HomePage({ searchParams }: Readonly<HomePageProps>
             popular {popularUnitLabel}
           </>
         )
-      : (
-          <>
-            Showing{" "}
-            <span className="font-semibold text-brand">{results.length}</span>{" "}
-            {genre} {popularUnitLabel}
-            {paginationTotalPages > 1 && (
-              <>
-                {" "}
-                (page {currentPage} of {paginationTotalPages})
-              </>
-            )}
-          </>
+      : buildGenreResultsSummary(
+          genre,
+          genreUnitLabel,
+          browsableCount,
+          currentPage,
+          paginationTotalPages,
+          results.length,
         );
 
   return (
