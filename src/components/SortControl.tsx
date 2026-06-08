@@ -45,7 +45,6 @@ function SortSelect({
       <select
         id={selectId}
         name={name}
-        key={formMode ? `${selectId}-${currentSort}` : selectId}
         {...(formMode
           ? { defaultValue: currentSort }
           : { value: currentSort })}
