@@ -30,7 +30,7 @@ import {
   saveReviewAction,
 } from "@/src/lib/review-actions";
 import SortControl from "@/src/components/SortControl";
-import { displayFontClass, ui, mediaBadgeClass } from "@/src/lib/ui";
+import { displayFontClass, ui, mediaBadgeClass, genreBadgeClass } from "@/src/lib/ui";
 
 type ProfileTab = "all" | "ratings" | "reviews";
 
@@ -46,6 +46,7 @@ const PROFILE_SORT_OPTIONS = [
 type MediaMeta = {
   title: string;
   posterUrl: string | null;
+  genres: string[];
 };
 
 type ActivityItem = {
@@ -54,6 +55,7 @@ type ActivityItem = {
   mediaType: MediaType;
   title: string;
   posterUrl: string | null;
+  genres: string[];
   updatedAt: string;
   hasRating: boolean;
   hasReview: boolean;
@@ -77,7 +79,11 @@ function movieMeta(
     review.tmdb?.posterUrl ?? cached?.posterUrl,
   );
 
-  return { title, posterUrl };
+  return {
+    title,
+    posterUrl,
+    genres: cached?.genres ?? [],
+  };
 }
 
 /** Alias for movieMeta used in review list rows. */
@@ -105,10 +111,21 @@ function metaLookupToMap(
   return new Map(Object.entries(record));
 }
 
-function ratingMeta(rating: EnrichedRatingResponse): MediaMeta {
+function ratingMeta(
+  rating: EnrichedRatingResponse,
+  lookup: Map<string, MediaMeta>,
+): MediaMeta {
+  const cached = isValidTmdbId(rating.tmdbId)
+    ? lookup.get(`${rating.mediaType}:${rating.tmdbId}`)
+    : undefined;
+
   return {
-    title: rating.tmdb?.title ?? `Title #${rating.tmdbId}`,
-    posterUrl: normalizePosterUrl(rating.tmdb?.posterUrl),
+    title:
+      rating.tmdb?.title ??
+      cached?.title ??
+      (isValidTmdbId(rating.tmdbId) ? `Title #${rating.tmdbId}` : "Unknown title"),
+    posterUrl: normalizePosterUrl(rating.tmdb?.posterUrl ?? cached?.posterUrl),
+    genres: cached?.genres ?? [],
   };
 }
 
@@ -211,13 +228,14 @@ function buildRecentActivity(
 
   for (const rating of ratings) {
     if (!isValidTmdbId(rating.tmdbId)) continue;
-    const meta = ratingMeta(rating);
+    const meta = ratingMeta(rating, reviewLookup);
     events.push({
       key: `rating:${rating.id}`,
       tmdbId: rating.tmdbId,
       mediaType: rating.mediaType,
       title: meta.title,
       posterUrl: meta.posterUrl,
+      genres: meta.genres,
       updatedAt: rating.updatedAt,
       hasRating: true,
       hasReview: false,
@@ -233,6 +251,7 @@ function buildRecentActivity(
       mediaType: review.mediaType,
       title: meta.title,
       posterUrl: meta.posterUrl,
+      genres: meta.genres,
       updatedAt: review.updatedAt,
       hasRating: false,
       hasReview: true,
@@ -265,6 +284,9 @@ function buildRecentActivity(
         !event.title.startsWith("Title #")
       ) {
         existing.title = event.title;
+      }
+      if (existing.genres.length === 0 && event.genres.length > 0) {
+        existing.genres = event.genres;
       }
     } else {
       byKey.set(mergeKey, { ...event, key: mergeKey });
@@ -322,6 +344,22 @@ function PosterThumb({
   );
 }
 
+function GenreBadges({ genres }: { genres: string[] }) {
+  if (genres.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {genres.map((genre) => (
+        <span key={genre} className={genreBadgeClass(genre)}>
+          {genre}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function RecentActivitySection({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
@@ -357,10 +395,11 @@ function RecentActivitySection({ items }: { items: ActivityItem[] }) {
             >
               {item.title}
             </p>
-            <div className="mt-1 flex justify-center">
+            <div className="mt-1 flex flex-wrap justify-center gap-1">
               <span className={mediaBadgeClass(item.mediaType)}>
                 {item.mediaType}
               </span>
+              <GenreBadges genres={item.genres} />
             </div>
             <div className="mt-2 flex flex-wrap justify-center gap-1">
               {item.hasRating && (
@@ -532,6 +571,7 @@ function RatingRow({
             <span className={mediaBadgeClass(rating.mediaType)}>
               {rating.mediaType}
             </span>
+            <GenreBadges genres={meta.genres} />
           </div>
           <p className="text-sm text-muted">
             Score: <span className="font-semibold text-brand">{rating.score}/10</span>
@@ -716,6 +756,7 @@ function ReviewRow({
             <span className={mediaBadgeClass(review.mediaType)}>
               {review.mediaType}
             </span>
+            <GenreBadges genres={meta.genres} />
           </div>
 
           {isEditing && canManage ? (
@@ -957,7 +998,7 @@ function ProfileAuthenticatedContent({
                       <RatingRow
                         key={rating.id}
                         rating={rating}
-                        meta={ratingMeta(rating)}
+                        meta={ratingMeta(rating, reviewMetaLookup)}
                         canManage
                         onUpdated={(updated) =>
                           setRatings((prev) =>

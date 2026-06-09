@@ -95,4 +95,28 @@ export function mediaBadgeClass(mediaType: MediaType): string {
   return mediaType === "show" ? ui.badgeShow : ui.badgeMovie;
 }
 
+const genreBadgeVariants = [
+  "rounded-full bg-badge-genre-0-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-0-text",
+  "rounded-full bg-badge-genre-1-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-1-text",
+  "rounded-full bg-badge-genre-2-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-2-text",
+  "rounded-full bg-badge-genre-3-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-3-text",
+  "rounded-full bg-badge-genre-4-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-4-text",
+  "rounded-full bg-badge-genre-5-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-5-text",
+  "rounded-full bg-badge-genre-6-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-6-text",
+  "rounded-full bg-badge-genre-7-bg px-3 py-1 text-xs font-semibold capitalize text-badge-genre-7-text",
+] as const;
+
+function genreBadgeIndex(genre: string): number {
+  let hash = 0;
+  for (let i = 0; i < genre.length; i++) {
+    hash = (hash * 31 + genre.charCodeAt(i)) >>> 0;
+  }
+  return hash % genreBadgeVariants.length;
+}
+
+/** Stable color per genre name (violet, rose, orange, teal, indigo, pink, lime, sky). */
+export function genreBadgeClass(genre: string): string {
+  return genreBadgeVariants[genreBadgeIndex(genre.trim().toLowerCase())];
+}
+
 export { displayFontClass };

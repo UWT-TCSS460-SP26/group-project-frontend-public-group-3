@@ -1,6 +1,6 @@
 import type { MediaListItem, MediaType } from "@/lib/types";
 import PosterImage from "@/src/components/PosterImage";
-import { ui, mediaBadgeClass } from "@/src/lib/ui";
+import { ui, mediaBadgeClass, genreBadgeClass } from "@/src/lib/ui";
 
 export function buildDetailHref(type: MediaType, id: number): string {
   const params = new URLSearchParams({
@@ -30,6 +30,11 @@ export default function MediaResultCard({ item }: { item: MediaListItem }) {
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <h2 className={ui.cardTitle}>{item.title}</h2>
             <span className={mediaBadgeClass(item.mediaType)}>{item.mediaType}</span>
+            {(item.genres ?? []).map((genre) => (
+              <span key={genre} className={genreBadgeClass(genre)}>
+                {genre}
+              </span>
+            ))}
           </div>
           <p className={`mb-2 ${ui.cardMeta}`}>{yearLabel}</p>
           <p className={`line-clamp-3 ${ui.cardBody}`}>{item.overview}</p>

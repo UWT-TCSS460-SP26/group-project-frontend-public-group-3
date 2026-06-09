@@ -13,6 +13,7 @@ import type { EnrichedRatingResponse, MediaType } from "@/lib/types";
 export type ReviewMediaMeta = {
   title: string;
   posterUrl: string | null;
+  genres: string[];
 };
 
 export type ProfileContent = {
@@ -34,6 +35,7 @@ function metaFromTmdb(
   return {
     title: tmdb?.title ?? `Title #${tmdbId}`,
     posterUrl: normalizePosterUrl(tmdb?.posterUrl),
+    genres: [],
   };
 }
 
@@ -50,9 +52,10 @@ async function fetchTitleMeta(
     return {
       title: detail.title,
       posterUrl: normalizePosterUrl(detail.posterUrl),
+      genres: detail.genres,
     };
   } catch {
-    return { title: `Title #${tmdbId}`, posterUrl: null };
+    return { title: `Title #${tmdbId}`, posterUrl: null, genres: [] };
   }
 }
 
@@ -65,13 +68,18 @@ async function getCachedTitleMeta(
 ): Promise<ReviewMediaMeta> {
   const key = mediaKey(mediaType, tmdbId);
   const cached = titleMetaCache.get(key);
-  if (cached?.posterUrl) {
+  if (cached?.posterUrl && cached.genres.length > 0) {
     return cached;
   }
 
-  let meta = metaFromTmdb(tmdbId, ratingTmdb);
-  if (!meta.posterUrl) {
-    meta = await fetchTitleMeta(mediaType, tmdbId);
+  let meta = cached ?? metaFromTmdb(tmdbId, ratingTmdb);
+  if (!meta.posterUrl || meta.genres.length === 0) {
+    const detailMeta = await fetchTitleMeta(mediaType, tmdbId);
+    meta = {
+      title: meta.title.startsWith("Title #") ? detailMeta.title : meta.title,
+      posterUrl: meta.posterUrl ?? detailMeta.posterUrl,
+      genres: detailMeta.genres.length > 0 ? detailMeta.genres : meta.genres,
+    };
   }
 
   titleMetaCache.set(key, meta);
@@ -199,21 +207,26 @@ async function buildReviewMetaLookup(
 
   for (const rating of ratings) {
     if (!isValidTmdbId(rating.tmdbId)) continue;
-    lookup[mediaKey(rating.mediaType, rating.tmdbId)] = metaFromTmdb(
-      rating.tmdbId,
-      rating.tmdb,
-    );
+    lookup[mediaKey(rating.mediaType, rating.tmdbId)] =
+      await getCachedTitleMeta(rating.mediaType, rating.tmdbId, rating.tmdb);
   }
 
   for (const review of reviews) {
     if (!isValidTmdbId(review.tmdbId)) continue;
     const key = mediaKey(review.mediaType, review.tmdbId);
+    const existing = lookup[key];
+    const meta = await getCachedTitleMeta(
+      review.mediaType,
+      review.tmdbId,
+      review.tmdb ?? null,
+    );
     lookup[key] = {
-      title: review.tmdb?.title ?? lookup[key]?.title ?? `Title #${review.tmdbId}`,
+      title: review.tmdb?.title ?? existing?.title ?? meta.title,
       posterUrl:
         normalizePosterUrl(review.tmdb?.posterUrl) ??
-        lookup[key]?.posterUrl ??
-        null,
+        existing?.posterUrl ??
+        meta.posterUrl,
+      genres: meta.genres.length > 0 ? meta.genres : (existing?.genres ?? []),
     };
   }
 
